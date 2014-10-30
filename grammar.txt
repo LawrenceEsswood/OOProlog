@@ -1,0 +1,28 @@
+%Context free grammar for OO prolog%
+
+Program -> Defs eof
+		
+Defs 	-> Def Defs
+		-> e
+		
+Def 	-> Class
+		-> Clause
+		-> Field
+		
+Class -> Header .\n Defs endclass.\n
+
+Header 	-> class LowerCaseName
+		-> class LowerCaseName extends LowerCaseName
+	
+Clause 	-> Fact \n
+		-> Fact :- Atm Atms . \n
+		
+Field	-> UpperCaseName
+Atms	-> , Atm Atms
+		-> e
+		
+Atm		-> Atom(Atm Atms)
+		-> Atom
+		-> FX Atm
+		-> Atm XF
+		-> Atm XFX Atm
