@@ -1,2 +1,1 @@
-class_x(a).
-foo(X) :- class_x(X).
+test(X, Y) :- write(X).

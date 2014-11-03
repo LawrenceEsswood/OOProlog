@@ -1,0 +1,7 @@
+class foo.
+	class bar extends foo.
+
+	endclass.
+	blah(X, Y, Z) :- Z = X::Y.
+	foo(X, Y) :- blah(X::Y, a, b).
+endclass.
