@@ -1,14 +1,20 @@
-:- op(100, xfy, ::).
-:- op(99, fx, class).
-:- op(100, xfx, extends).
-
-test(Defs) :- open('./test.oopl', read ,S) , parse_defs((S, user_output, _), Defs, end_of_file).
+main :- open('./tests/test.oopl', read ,S) , parse_defs((S, user_output, _), Defs, end_of_file), !, write(Defs).
 
 %%%%%%%%%%
 % Parser %
 %%%%%%%%%%
 
+% Define some operators to help parsing %
+
+:- op(100, xfy, ::).
+:- op(99, fx, class).
+:- op(100, xfx, extends).
+
 % Helper predicates %
+
+% Appends a list to a disjunction
+comma_list_append([], P, P).
+comma_list_append([X|Xs],P,','(X,Pd)) :- comma_list_append(Xs, P, Pd).
 
 % Flattens a list of tuples into a single list %
 flatten_single([],[]).
@@ -20,7 +26,7 @@ flatten_pair([],[],[]).
 flatten_pair([(V, NstLs)|Rest],[V|RestV], Res) :- 
 	flatten_pair(Rest, RestV, RestNstLs), append(NstLs, RestNstLs, Res).
 
-bind_vars_to_name([=(X,X)|XS]) :- bind_vars_to_name(XS).
+bind_vars_to_name([=(X,var(Y))|XS]) :- atom_concat('_', X, Y), bind_vars_to_name(XS).
 bind_vars_to_name([]).
 
 in_stream((IS,_,_), IS).
@@ -30,18 +36,24 @@ out_stream((_,OS,_), OS).
 
 parse_defs(S, [Def|DefLs], End) :- in_stream(S, IS),
 	read_term(IS, T, [variable_names(Eqs)]),
-	nl,
+	bind_vars_to_name(Eqs),
 	T \= End,
 	!,
-	bind_vars_to_name(Eqs),
-	parse_def(S, T, Def),
+	(T \= end_of_file ; throw('Unexpected end of stream')),
+	(parse_def(S, T, Def) ; throw('Could not parse definition')),
 	parse_defs(S, DefLs, End).
 parse_defs(_, [], _).
 
 % Parses a single definition %
 						
 parse_def(S, T, Def) :- parse_class(S, T, Def).
+parse_def(S, T, Def) :- parse_field(S, T, Def).
 parse_def(S, T, Def) :- parse_clause(S, T, Def).
+
+
+% Parses a field %
+parse_field(_, var(X), field(X)) :- !.
+
 
 % Parses a normal prolog clause %
 parse_clause(S, P :- Xs, rule(Pd, Ys)) :-
@@ -55,12 +67,11 @@ parse_predicate(_, P, P) :- functor(P, _, _).
 
 % Parses a compound or atom %
 
-parse_functor_top(S, P, Pd) :- functor(P, ',', _) , parse_functor_args_together(S, P, Pd).
+parse_functor_top(S, P, Pd) :- functor(P, ',', _) , arg(1, P, A), arg(2, P, B), parse_functor(S, A, Ad, [], Nst), parse_functor_top(S, B, Bd), comma_list_append(Nst,','(Ad,Bd),Pd).
 parse_functor_top(S, P, Pdd) :- 
-	functor(P, X, _), X \= ',', 
+	functor(P, X, _), X \= ',',
 	parse_functor(S, P, Pd, [], Nst),
-	append(Nst, [Pd], Lst),
-	Pdd =.. [','|Lst].
+	comma_list_append(Nst, Pd, Pdd).
 
 % In this case we have to rewrite infix ::, un-nest as a predicate % TODO
 parse_functor(S, X::Y, Z, Nested, Nested2) :- 
@@ -88,6 +99,9 @@ parse_functor_args_seperate(S, P, Pd, NstDs) :-
 % Interleave the lifted out operations %
 parse_functor_args_together(S, P, Pd) :-
 	findall((Vd, NstD), parse_functor_args(S, P, Vd, NstD), Result),
+	nl,
+	write(Result),
+	nl,
 	flatten_single(Result, Lst),
 	functor(P, X, _),
 	Pd =.. [X|Lst].
@@ -101,5 +115,5 @@ parse_class(S, T, class_def(H, Defs)) :-
 	parse_header(S, T, H),
 	parse_defs(S, Defs, endclass).
 						
-parse_header(_, class X extends Y, class_head(X,[Y])).
-parse_header(_, class X, class_head(X,[])).
+parse_header(_, class X extends Y, class_head(X,[Y])) :- atomic(X), atomic(Y), !.
+parse_header(_, class X, class_head(X,[])) :- atomic(X).
