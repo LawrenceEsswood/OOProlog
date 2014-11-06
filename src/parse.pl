@@ -1,4 +1,4 @@
-main :- open('./tests/test.oopl', read ,S) , parse_defs((S, user_output, _), Defs, end_of_file), !, write(Defs).
+%main :- open('./tests/test.oopl', read ,S) , parse_defs((S, user_output, _), Defs, end_of_file), !, write(Defs).
 
 %%%%%%%%%%
 % Parser %
@@ -56,7 +56,7 @@ parse_field(_, var(X), field(X)) :- !.
 
 
 % Parses a normal prolog clause %
-parse_clause(S, P :- Xs, rule(Pd, Ys)) :-
+parse_clause(S, P :- Xs, rule(Pd, Ys)) :- !,
 	parse_predicate(S, P, Pd), 
 	parse_functor_top(S, Xs, Ys).
 
@@ -73,13 +73,14 @@ parse_functor_top(S, P, Pdd) :-
 	parse_functor(S, P, Pd, [], Nst),
 	comma_list_append(Nst, Pd, Pdd).
 
-% In this case we have to rewrite infix ::, un-nest as a predicate % TODO
-parse_functor(S, X::Y, Z, Nested, Nested2) :- 
-	parse_functor(S, X, Xd, [::(Xd, Yd, Z)|Nested], Nested1),
-	parse_functor(S, Y, Yd, Nested1, Nested2).
-	
 % Atom case %
-parse_functor(_, P, P, Nst, Nst) :- functor(P, P, 0).
+parse_functor(_, var(P), var(P), Nst, Nst) :- !.
+parse_functor(_, P, atom(P), Nst, Nst) :- atomic(P), !.
+
+% In this case we have to rewrite infix ::, un-nest as a predicate % TODO
+parse_functor(S, X::Y, tmp(Z), Nested, Nested2) :- !,
+	parse_functor(S, X, Xd, [::(Xd, Yd, tmp(Z))|Nested], Nested1),
+	parse_functor(S, Y, Yd, Nested1, Nested2).
 
 % Normal predicate %
 parse_functor(S, P, Pd, Nst, Nstdd) :- 

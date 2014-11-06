@@ -17,10 +17,14 @@ test(parse1) :- open('./test.oopl', read ,S) , parse_defs((S, user_output, _), D
 								[field('_X')]
 							),
 							fact(some_fact(var('_X'), var('_Y'), var('_Z'))),
-							rule(foo(var('_X'), var('_Y')),(1=1, ::(var('_X'),var('_Y'),Z), blah(Z, a, b), 2=2))
+							rule(foo(var('_X'), var('_Y')),(atom(1)=atom(1), ::(var('_X'),var('_Y'),tmp(Z)), blah(tmp(Z), atom(a), atom(b)), atom(2)=atom(2)))
 							]
 							),
 						fact(outer_pred(var('_X'),var('_X')))],
+				write(Expect),
+				nl,
+				write(Defs),
+				nl,
 				Defs = Expect.
 
 test(flatten_single) :- flatten_single([(a,[b]),(c,[d])],[b,a,d,c]).
