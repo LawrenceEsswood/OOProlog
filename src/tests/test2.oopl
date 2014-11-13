@@ -1,0 +1,4 @@
+class foo.
+	X. % This field can be used in predicates within the class
+	get_x(X). % How a getter might be implemented
+endclass.
