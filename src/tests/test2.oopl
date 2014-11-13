@@ -1,4 +1,11 @@
 class foo.
 	X. % This field can be used in predicates within the class
 	get_x(X). % How a getter might be implemented
+
+	pred(Q, P) :- Q >= P. 
+	use_pred(Q, P) :- pred(Q, P). % Scoped to foo version of pred
+
 endclass.
+
+pred(Q, P) :- Q =< P.
+use_pred(Q, P) :- pred(Q, P). % Scoped to top version of pred

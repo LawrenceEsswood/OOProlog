@@ -86,7 +86,7 @@ resolve_arg(_, tmp(Arg), Arg, []) :- !.
 resolve_arg(Scope, P, Pd, Commands) :- 
 	P =.. [Nm|Args],
 	lookup(Scope, pred(Nm), Prefix), !,
-	make_predicate_name(Nm, Prefix, NewName),
+	atom_concat(Prefix, Nm, NewName),
 	resolve_args(Scope, Args, Argsd, Commands),
 	Pd =.. [NewName|Argsd].
 resolve_arg(Scope, P, Pd, Commands) :-
