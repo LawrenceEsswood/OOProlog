@@ -1,12 +1,26 @@
 expand_field(Name,(Name,_)).
-expand_predicate(This,(Name, Predicate), (Name, Predicate(This))).
+expand_predicate(This,(Name, Predicate), (Name, F)) :- F =.. [Predicate, This].
 
-build_class(Type, class(Type, Members)) :-
+build_class(Type, C) :-
+	C = class(Type, Members),
 	maplist(expand_field, Type::'Fields', Fields),
-	maplist(expand_predicate(This), Type::'Predicates', Predicates),
+	maplist(expand_predicate(C), Type::'Predicates', Predicates),
 	append(Fields, Predicates, MembersLs),
 	Members =.. [members|MembersLs].
 
+::(class(_,M), Nm, Res) :- arg(_, M, (Nm, Res)).
+
+construct_classType(This, N, F, Pred, Par, Out, Cons) :- 
+	::(This, 'Name', N), 
+	::(This, 'Fields', F), 
+	::(This, 'Predicates', Pred), 
+	::(This, 'Parent', Par), 
+	::(This, 'Outer', Out), 
+	::(This, 'Constructor', Cons).
+
+class_def_classType(X) :- X = class(X, members(('Name', classType),('Fields', ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor']),('Predicates', []), ('Parent',none), ('Outer', none), ('Constructor',construct_classType))).
+
+/*
 class classType.
 	Name.
 	Fields.
@@ -17,7 +31,4 @@ class classType.
 	classType(Name, Fields, Predicates, Parent, Outer, Constructor).
 
 endclass.
-
-%call(construct_classType, Name, Fields, Predicates, Parent, Outer)).
-
-class_def_classType(X) :- X = class(X, members(('Name', classType),('Fields', ['Name', 'Fields', 'Predicates', 'Parent', 'Outer']),('Predicates', []), ('Parent',none), ('Outer', none))).
+*/

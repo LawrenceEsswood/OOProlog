@@ -17,7 +17,7 @@ test(parse1) :- open('./test.oopl', read ,S) , parse_defs((S, user_output, _), D
 								[field('X')]
 							),
 							fact(some_fact(var('X'), var('Y'), var('Z'))),
-							rule(foo(var('X'), var('Y')),(atom(1)=atom(1), ::(var('X'),var('Y'),tmp(Z)), blah(tmp(Z), atom(a), atom(b)), atom(2)=atom(2)))
+							rule(foo(var('X'), var('Y')),(atom(1)=atom(1), blah(var('X')::var('Y'), atom(a), atom(b)), atom(2)=atom(2)))
 							]
 							),
 						fact(outer_pred(var('X'),var('X')))],

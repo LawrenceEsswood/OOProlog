@@ -2,6 +2,7 @@ class foo.
 	X. % This field can be used in predicates within the class
 	get_x(X). % How a getter might be implemented
 
+	set_x_with_a :- X = a.
 	pred(Q, P) :- Q >= P. 
 	use_pred(Q, P) :- pred(Q, P). % Scoped to foo version of pred
 
@@ -9,3 +10,5 @@ endclass.
 
 pred(Q, P) :- Q =< P.
 use_pred(Q, P) :- pred(Q, P). % Scoped to top version of pred
+
+test_foo(C::'X') :- new(foo, C), call(C::set_x_with_a).

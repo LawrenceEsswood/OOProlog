@@ -50,19 +50,35 @@ parse_def(S, T, Def) :- parse_class(S, T, Def).
 parse_def(S, T, Def) :- parse_field(S, T, Def).
 parse_def(S, T, Def) :- parse_clause(S, T, Def).
 
-
 % Parses a field %
 parse_field(_, var(X), field(X)) :- !.
 
+% Parse a class header and body %
+parse_class(S, T, class_def(H, Defs)) :-
+	parse_header(S, T, H),
+	parse_defs(S, Defs, endclass).
+						
+parse_header(_, class X extends Y, class_head(X,[Y])) :- atomic(X), atomic(Y), !.
+parse_header(_, class X, class_head(X,[])) :- atomic(X).
 
 % Parses a normal prolog clause %
-parse_clause(S, P :- Xs, rule(Pd, Ys)) :- !,
-	parse_predicate(S, P, Pd), 
-	parse_functor_top(S, Xs, Ys).
+parse_clause(_, P :- Xs, rule(Pd, Ys)) :- !,
+	tag_predicate(P, Pd),
+	tag_atoms(Xs, Ys).
 
-parse_clause(S, P, fact(Pd)) :- parse_predicate(S, P, Pd).
+parse_clause(_, P, fact(Pd)) :- tag_predicate(P, Pd).
 
-% Parses the rule part of a clause %
+tag_predicate(P, P) :- atomic(P).
+tag_predicate(P, Pd) :- not(atomic(P)), tag_atoms(P, Pd).
+
+tag_atoms(var(X), var(X)) :- !.
+tag_atoms(X, atom(X)) :- atomic(X), !.
+tag_atoms(P, P2) :- 
+	functor(P, _, _), P =.. [Nm|Args], 
+	maplist(tag_atoms, Args, Args2),
+	P2 =.. [Nm|Args2].
+/*
+
 parse_predicate(_, P, P) :- functor(P, _, _).
 
 % Parses a compound or atom %
@@ -77,7 +93,7 @@ parse_functor_top(S, P, Pdd) :-
 parse_functor(_, var(P), var(P), Nst, Nst) :- !.
 parse_functor(_, P, atom(P), Nst, Nst) :- atomic(P), !.
 
-% In this case we have to rewrite infix ::, un-nest as a predicate % TODO
+% In this case we have to rewrite infix ::, un-nest as a predicate % TODO THIS SHOULDNT HAPPEN HERE!
 parse_functor(S, X::Y, tmp(Z), Nested, Nested2) :- !,
 	parse_functor(S, X, Xd, [::(Xd, Yd, tmp(Z))|Nested], Nested1),
 	parse_functor(S, Y, Yd, Nested1, Nested2).
@@ -111,10 +127,4 @@ parse_functor_args(S, P, Vd, NstD) :-
 	arg(_, P, V),
 	parse_functor(S, V, Vd, [], NstD).
 
-% Parse a class header and body %
-parse_class(S, T, class_def(H, Defs)) :-
-	parse_header(S, T, H),
-	parse_defs(S, Defs, endclass).
-						
-parse_header(_, class X extends Y, class_head(X,[Y])) :- atomic(X), atomic(Y), !.
-parse_header(_, class X, class_head(X,[])) :- atomic(X).
+*/
