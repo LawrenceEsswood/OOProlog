@@ -26,7 +26,7 @@ flatten_pair([],[],[]).
 flatten_pair([(V, NstLs)|Rest],[V|RestV], Res) :- 
 	flatten_pair(Rest, RestV, RestNstLs), append(NstLs, RestNstLs, Res).
 
-bind_vars_to_name([=(X,var(Y))|XS]) :- atom_concat('_', X, Y), bind_vars_to_name(XS).
+bind_vars_to_name([=(X,var(X))|XS]) :- bind_vars_to_name(XS).
 bind_vars_to_name([]).
 
 in_stream((IS,_,_), IS).
