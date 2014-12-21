@@ -1,0 +1,12 @@
+class foo.
+	X.
+	some_pred(A,B,C).
+	some_pred_inherit(A,B,C).
+	some_pred_inherit(A,B).
+endclass.
+
+class bar extends foo.
+	Y.
+	some_other_pred(A,B,C).
+	some_pred_inherit(A,B).
+endclass.

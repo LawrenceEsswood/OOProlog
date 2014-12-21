@@ -9,16 +9,17 @@ build_class(Type, C) :-
 	Members =.. [members|MembersLs].
 
 ::(class(_,M), Nm, Res) :- arg(_, M, (Nm, Res)).
+::(class(_,M), Nm, Res, N) :- arg(N, M, (Nm, Res)).
 
 construct_classType(This, N, F, Pred, Par, Out, Cons) :- 
-	::(This, 'Name', N), 
-	::(This, 'Fields', F), 
-	::(This, 'Predicates', Pred), 
+	::(This, 'Name', N),
+	::(This, 'Fields', F),
+	::(This, 'Predicates', Pred),
 	::(This, 'Parent', Par), 
 	::(This, 'Outer', Out), 
 	::(This, 'Constructor', Cons).
 
-class_def_classType(X) :- X = class(X, members(('Name', classType),('Fields', ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor']),('Predicates', []), ('Parent',none), ('Outer', none), ('Constructor',construct_classType))).
+class_def__classType(X) :- X = class(X, members(('Name', classType),('Fields', ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor']),('Predicates', []), ('Parent',none), ('Outer', none), ('Constructor',construct_classType))).
 
 /*
 class classType.
