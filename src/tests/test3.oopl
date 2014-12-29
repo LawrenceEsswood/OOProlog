@@ -10,3 +10,5 @@ class bar extends foo.
 	some_other_pred(A,B,C).
 	some_pred_inherit(A,B).
 endclass.
+
+blah(X, X).

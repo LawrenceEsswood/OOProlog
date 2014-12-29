@@ -18,5 +18,6 @@ filter(Rule, [D|Defs],[N|Names]) :- call(Rule, D, N), !, filter(Rule, Defs, Name
 filter(Rule, [_|Defs], Names) :- filter(Rule, Defs, Names).
 filter(_, [], []).
 
-% Add qoutes to an atom
+% Add qoutes to an atom if needed
+add_qoutes(X, X) :- number(X), !.
 add_qoutes(X,Y) :- atomic_list_concat(['\'', X, '\''], Y).

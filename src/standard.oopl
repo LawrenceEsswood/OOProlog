@@ -9,15 +9,17 @@ build_class(Type, C) :-
 	Members =.. [members|MembersLs].
 
 ::(class(_,M), Nm, Res) :- arg(_, M, (Nm, Res)).
-::(class(_,M), Nm, Res, N) :- arg(N, M, (Nm, Res)).
+::(class(_,M), Nm, Res, N) :- arg(N, M, (Nm, Res)), !.
+% Failure can occur with multiple inheritance. N should be seen as a 'hint'.
+::(class(_,M), Nm, Res, _) :- arg(_, M, (Nm, Res)). 
 
 construct_classType(This, N, F, Pred, Par, Out, Cons) :- 
-	::(This, 'Name', N),
-	::(This, 'Fields', F),
-	::(This, 'Predicates', Pred),
-	::(This, 'Parent', Par), 
-	::(This, 'Outer', Out), 
-	::(This, 'Constructor', Cons).
+	::(This, 'Name', N, 1),
+	::(This, 'Fields', F, 2),
+	::(This, 'Predicates', Pred, 3),
+	::(This, 'Parent', Par, 4), 
+	::(This, 'Outer', Out, 5), 
+	::(This, 'Constructor', Cons, 6).
 
 class_def__classType(X) :- X = class(X, members(('Name', classType),('Fields', ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor']),('Predicates', []), ('Parent',none), ('Outer', none), ('Constructor',construct_classType))).
 

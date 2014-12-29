@@ -1,15 +1,18 @@
 :- ['./parse.pl'].
 :- ['./utils.pl'].
 
-main :- quick('./tests/test3',':- [\'standard.out.pl\'].\n:- interpret.\n').
-%main :- quick('./standard').
+%main :- quick('./tests/test3',
+%':- [\'../standard.out.pl\'].
+%', []).
 
-quick(X, Extras) :- atom_concat(X, '.oopl', X1), atom_concat(X, '.out.pl', X2), compile(X1, X2, Extras).
-quick(X) :- quick(X,'').
+main :- quick('./standard', [no_interpret,no_munge]).
 
-compile(In, Out, Extras) :- 
+quick(X, Extras, Opts) :- atom_concat(X, '.oopl', X1), atom_concat(X, '.out.pl', X2), compile(X1, X2, Extras, Opts).
+quick(X, Opts) :- quick(X,'',Opts).
+
+compile(In, Out, Extras, Opts) :- 
 	open(In, read , S), parse_defs((S, user_output, _), Defs, end_of_file), !,
-	open(Out, write , S2), write(S2, Extras), generate_defs_top((user_input, S2, _), Defs), !.
+	open(Out, write , S2), write(S2, Extras), generate_defs_top((user_input, S2, _), Defs, Opts), !.
 
 % Helper predicates (these should be moved into their own file)
 
@@ -70,23 +73,27 @@ make_class(S, Def, ScopeAbove, Scope, SuperPreds) :-
 	get_unique_predicates(Predicates, UPredicates),
 	make_class_type_functor(Name, ScopeAbove, F),
 	make_class_type_args(ScopeAbove, Args),
-	make_class_type_body(Name, Fields, UPredicates, Bdy, none),
+	scope_opts(S, Opts),
+	make_class_type_body(Opts, ame, Fields, UPredicates, Bdy, none),
 	P =.. [F | Args],
 	out_stream(S, Out), write(Out, (P :- Bdy)), write(Out, '.\n').
 
 % The name of a predicate after generation
-make_predicate_name(pred(PredicateName, _), Scope, Result) :- scope_prefix(Scope, Prefix), atomic_list_concat(['p',Prefix, PredicateName], Result).
+append_if_not_blank(Prefix, PredicateName, Result) :- Prefix \= '', atomic_list_concat(['p',Prefix, PredicateName], Result).
+append_if_not_blank('', PredicateName, PredicateName).
+make_predicate_name(pred(PredicateName, _), Scope, Result) :- scope_prefix(Scope, Prefix), append_if_not_blank(Prefix, PredicateName, Result).
+
 % The name of the rule for getting a classes type info
 make_class_type_functor(ClassName, Scope, Result) :- scope_prefix(Scope, Prefix), atomic_list_concat([class_def, Prefix, ClassName], Result).
 % The compound the represents a class type 
 make_class_type_args(Scope, Bdy) :- add_this(['T'], Scope, Bdy).
 % Easier to just use new
-make_class_type_body(Name, Fields, Predicates, Bdy, Constructor) :- 
-	expand_new(new('X', 'T', Name, Fields, Predicates, none, none, Constructor), _, NewComs),
+make_class_type_body(Opts, Name, Fields, Predicates, Bdy, Constructor) :- 
+	expand_new(Opts, new('X', 'T', Name, Fields, Predicates, none, none, Constructor), _, NewComs),
 	list_to_comma_functor([class_def__classType('X') | NewComs], Bdy). 
 
-expand_new(Command, Con, [build_class(Type, Class), ::(Type, Constructor, Con) , ((Con = none) ; Call)]) :- 
-	add_qoutes('Constructor', Constructor),
+expand_new(Opts, Command, Con, [build_class(Type, Class), ::(Type, Constructor, Con) , ((Con = none) ; Call)]) :- 
+	((member('no_qoutes', Opts), Constructor = 'Constructor') ; add_qoutes('Constructor', Constructor)),
 	Command =.. [new, Type, Class | Args],
 	Call =.. [call, Con, Class | Args].
 
@@ -118,28 +125,43 @@ get_defined_names([],[]).
 get_defined_names([D|Ds],[N|Ns]) :- get_name(D,N), get_defined_names(Ds, Ns).
 
 % Getters for scope
-scope_prefix(scp(Name,_,_,_,_), Name).
+scope_prefix(scp(_,Name,_,_,_,_), Name).
 scope_prefix(top,'_').
-scope_defines(scp(_,_,Names,_,_), Names).
-scope_parent(scp(_,_,_,_,P), P).
-scope_is_top(scp(_,_,_,_,top)).
-scope_header(scp(_,Hdr,_,_,_), Hdr).
-scope_class_scopes(scp(_,_,_,CS,_), CS).
+scope_opts(scp(Opts,_,_,_,_,_), Opts).
+scope_defines(scp(_,_,_,Names,_,_), Names).
+scope_parent(scp(_,_,_,_,_,P), P).
+scope_is_top(scp(_,_,_,_,_,top)).
+scope_header(scp(_,_,Hdr,_,_,_), Hdr).
+scope_class_scopes(scp(_,_,_,_,CS,_), CS).
 
 % Creates a new scope
-new_scope(Defs, Hd, OldScope, Name, S) :- 
-	S = scp(NewName, Hd, Defined, ClassScopes, OldScope),
+new_scope(Opts, Defs, Hd, OldScope, Name, S) :- 
+	S = scp(Opts, NewName, Hd, Defined, ClassScopes, OldScope),
 	scope_prefix(OldScope, OldName),
-	atomic_list_concat(['_', Name, OldName], NewName),
+	(	(member('no_munge', Opts), NewName = '');
+		atomic_list_concat(['_', Name, OldName], NewName)
+	),
 	get_defined_names(Defs, Defined),
-	all_new_class_scopes(Defs, S, ClassScopes).
+	all_new_class_scopes(Opts, Defs, S, ClassScopes).
 
-all_new_class_scopes(Defs, Scope, CSS) :- filter(new_class_scope(Scope), Defs, CSS).
-new_class_scope(ScopeAbove, C, cs(N, ClassScope)) :-
+% Save the top of the scope to the output for the interpreter
+dump_scope(S, scp(_,_,_,Names,_,_)) :- 
+	out_stream(S, Out), 
+	write_canonical(Out, defined_names(Names)),
+	write(Out, '.
+:- [\'../interpret.pl\'].
+:- interpret.
+').
+
+% Recreates the top scope from given names	
+load_scope(Names, scp(['no_qoutes'],'__','top',Names,[],top)).
+
+all_new_class_scopes(Opts, Defs, Scope, CSS) :- filter(new_class_scope(Opts, Scope), Defs, CSS).
+new_class_scope(Opts, ScopeAbove, C, cs(N, ClassScope)) :-
 	get_class_name(C, N),
 	get_class_header(C, H),
 	get_class_body(C, B),
-	new_scope(B, H, ScopeAbove, N, ClassScope).
+	new_scope(Opts, B, H, ScopeAbove, N, ClassScope).
 
 % looks up a name to get its containing scope
 lookup(Scope, Arg, Scope) :- scope_defines(Scope, Names), member(Arg, Names), !.
@@ -151,7 +173,7 @@ scope_of(Scope, Pname, Scp) :- scope_class_scopes(Scope, CS), member(cs(Pname, S
 %Walks the parse tree finding out names to create scope
 
 % Top level predicate for generating prolog
-generate_defs_top(S, Defs) :- new_scope(Defs, top, top, '', NewScope), generate_defs(S, Defs, NewScope).
+generate_defs_top(S, Defs, Opts) :- new_scope(Opts, Defs, top, top, '', NewScope), generate_defs(S, Defs, NewScope), (member('no_interpret',Opts);dump_scope(S, NewScope)).
 
 % Generates prolog from a list of definitions
 generate_defs(S, [Def|Defs], Scope) :- generate_def(S, Def, Scope), generate_defs(S, Defs, Scope).
@@ -160,7 +182,8 @@ generate_defs(_, [], _).
 % new is expanded into other predicates
 resolve_arg_new(Scope, Reps, RepsOut, P, AllCommands) :-
 	functor(P, new, _), !,
-	expand_new(P, tmp(_), Commands),
+	scope_opts(Scope, Opts),
+	expand_new(Opts, P, tmp(_), Commands),
 	resolve_args(Scope, Reps, RepsOut, Commands, Commands1, Commands2),
 	append(Commands2, Commands1, AllCommands).
 
@@ -181,13 +204,15 @@ resolve_arg(Scope, Reps, [(atom(X),Tmp)|Reps], atom(X), Tmp, [C]) :-
 	add_this([Tmp], Scope, Ls),
 	C =.. [F|Ls].
 
+resolve_arg(S, R, R, atom(X), X, []) :- scope_opts(S, Opts), member('no_qoutes', Opts), !.
 resolve_arg(_, R, R, atom(X), Y, []) :- !, add_qoutes(X, Y).
 
 %Variables might be members
 resolve_arg(Scope, Reps, [(var(Arg),Tmp)|Reps], var(Arg), Tmp, [C]) :-
 	lookup(Scope, field(Arg), _), !,
 	C = ::('This', ArgC, Tmp),
-	add_qoutes(Arg, ArgC).
+	scope_opts(Scope, Opts),
+	((member('no_qoutes', Opts), Arg = ArgC) ; add_qoutes(Arg, ArgC)).
 resolve_arg(_, R, R, var(Arg), Arg, []) :- !.
 
 % Tmps will never mean anything else in context
