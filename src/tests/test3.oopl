@@ -3,6 +3,7 @@ class foo.
 	some_pred(A,B,C).
 	some_pred_inherit(A,B,C).
 	some_pred_inherit(A,B).
+	foo(X).
 endclass.
 
 class bar extends foo.

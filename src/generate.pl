@@ -1,11 +1,11 @@
 :- ['./parse.pl'].
 :- ['./utils.pl'].
 
-%main :- quick('./tests/test3',
-%':- [\'../standard.out.pl\'].
-%', []).
+main :- quick('./tests/test3',
+':- [\'../standard.out.pl\'].
+', []).
 
-main :- quick('./standard', [no_interpret,no_munge]).
+%main :- quick('./standard', [no_interpret,no_munge]).
 
 quick(X, Extras, Opts) :- atom_concat(X, '.oopl', X1), atom_concat(X, '.out.pl', X2), compile(X1, X2, Extras, Opts).
 quick(X, Opts) :- quick(X,'',Opts).
@@ -16,7 +16,15 @@ compile(In, Out, Extras, Opts) :-
 
 % Helper predicates (these should be moved into their own file)
 
-% Creates a tuple of the original predicate, and its scoped name
+% Checks if a predicate is a constructor for the class defined at this scope
+is_constructor(Scope, pred(Name, N), pred(Name, N)) :-
+	scope_header(Scope, Hd),
+	get_header_name(Hd, ClassNm),
+	Name = ClassNm.
+
+is_not_constructor(Scope, P, P) :- not(is_constructor(Scope, P, _)).
+
+% Creates a tuple of the original predicate, and its scoped name.
 pair_predicate(Scope, Name, (Name, Resolved)) :-
 	make_predicate_name(Name, Scope, Resolved).
 
@@ -50,11 +58,12 @@ predicate_inherit([(CName, CRes)|Ps], ParentPs, [(CName, CRes)|TotalPairs], Supe
 find_class_definitions(Scope, Hchild, Fields, Predicates, SuperPreds) :-
 	scope_defines(Scope, Names),
 	filter(get_field_name_qoute,Names,ThisFields),
-	filter(pair_predicate(Scope), Names, ThisPredicates),
+	filter(is_not_constructor(Scope), Names, Names2),
+	filter(pair_predicate(Scope), Names2, ThisPredicates),
 	get_header_parents(Hchild, Parents),
 	find_parents_definitions(Scope, Parents, ParentFields, ParentPredicates, ParentSuperPreds),
-	(intersection(ThisFields, ParentFields,[]) ; throw('Cannot redefine a parents field.')),
-	append(ParentFields, ThisFields, Fields), %Might allow redefinition, use union
+	(intersection(ThisFields, ParentFields,[]) ; throw('Cannot redefine a parents field.')),  %Might allow redefinition, use union
+	append(ParentFields, ThisFields, Fields),
 	predicate_inherit(ThisPredicates, ParentPredicates, Predicates, ThisSuperPreds),
 	append(ParentSuperPreds, ThisSuperPreds, SuperPreds).
 
@@ -65,6 +74,9 @@ get_unique_predicates([(pred(Nm,_),Res)|Ps], [(Nm,Res)|OPs]) :-
 	filter(not_same_pred_name(Nm),Ps,FPs),
 	get_unique_predicates(FPs, OPs).
 
+none_if_empty(_, [], none).
+none_if_empty(Scope, [X|_], Y) :- make_predicate_name(X, Scope, Y).
+
 % Generates the rule that constructs a class type
 make_class(S, Def, ScopeAbove, Scope, SuperPreds) :-
 	get_class_name(Def, Name),
@@ -73,8 +85,11 @@ make_class(S, Def, ScopeAbove, Scope, SuperPreds) :-
 	get_unique_predicates(Predicates, UPredicates),
 	make_class_type_functor(Name, ScopeAbove, F),
 	make_class_type_args(ScopeAbove, Args),
-	scope_opts(S, Opts),
-	make_class_type_body(Opts, ame, Fields, UPredicates, Bdy, none),
+	scope_opts(Scope, Opts),
+	scope_defines(Scope, Names),
+	filter(is_constructor(Scope), Names, Constructors),
+	none_if_empty(Scope, Constructors, Constructor),
+	make_class_type_body(Opts, Name, Fields, UPredicates, Bdy, Constructor),
 	P =.. [F | Args],
 	out_stream(S, Out), write(Out, (P :- Bdy)), write(Out, '.\n').
 
@@ -219,10 +234,12 @@ resolve_arg(_, R, R, var(Arg), Arg, []) :- !.
 resolve_arg(_, R, R, tmp(Arg), Arg, []) :- !.
 
 % This is the case where we have a compound, might be need to add a prefix and/or 'This'
+% FIXME, replace with access/call for correct semantics
 resolve_arg(Scope, Reps, RepsOut, P, Pd, Commands) :- 
 	P =.. [Nm|Args],
 	length(Args, N),
 	lookup(Scope, pred(Nm, N), PredScope), !,
+	(is_not_constructor(PredScope, pred(Nm, N), _) ; throw('Cannot directly call a constructor.')),
 	make_predicate_name(pred(Nm, N), Scope, NewName),
 	resolve_args(Scope, Reps, RepsOut, Args, Args2, Commands),
 	add_this(Args2, PredScope, Args3),
