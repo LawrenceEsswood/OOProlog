@@ -1,5 +1,6 @@
 :- ['./parse.pl'].
 :- ['./generate.pl'].
+:- ['../src/utils/utils.pl'].
 
 call_list([]).
 call_list([X|Xs]) :- call(X), call_list(Xs).

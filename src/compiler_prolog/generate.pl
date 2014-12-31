@@ -177,7 +177,7 @@ dump_scope(S, scp(_,_,_,Names,_,_)) :-
 	out_stream(S, Out), 
 	write_canonical(Out, defined_names(Names)),
 	write(Out, '.
-:- [\'../interpret.pl\'].
+:- [\'./interpret.pl\'].
 :- interpret.
 ').
 
