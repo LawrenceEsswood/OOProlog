@@ -6,7 +6,7 @@ main :- run_tests.
 :- op(100, xfx, extends).
 
 :- begin_tests(parse).
-:- ['../parse'].
+:- ['../compiler_prolog/parse'].
 
 %
 

@@ -1,20 +1,33 @@
 :- ['./parse.pl'].
-:- ['./utils.pl'].
+:- ['../src/utils/utils.pl'].
 
-main :- quick('./tests/test3',
-':- [\'../standard.out.pl\'].
-', []).
+%%%%%%%%%%%%
+% Compiler %
+%%%%%%%%%%%%
 
-%main :- quick('./standard', [no_interpret,no_munge]).
-
-quick(X, Extras, Opts) :- atom_concat(X, '.oopl', X1), atom_concat(X, '.out.pl', X2), compile(X1, X2, Extras, Opts).
-quick(X, Opts) :- quick(X,'',Opts).
+%Compilation main entry point. Takes an in file, and an out file. Extras will be appended to the start. Current options are:
+% [no_munge, no_commas, no_interpret]
 
 compile(In, Out, Extras, Opts) :- 
 	open(In, read , S), parse_defs((S, user_output, _), Defs, end_of_file), !,
-	open(Out, write , S2), write(S2, Extras), generate_defs_top((user_input, S2, _), Defs, Opts), !.
+	open(Out, write , S2), write(S2, Extras), generate_defs_top((user_input, S2, _), Defs, Opts), !,
+	close(S), close(S2).
 
-% Helper predicates (these should be moved into their own file)
+% An oopl file with name X, outputs it to X.out.pl
+quick(X, Extras, Opts) :- atom_concat(X, '.oopl', X1), atom_concat(X, '.out.pl', X2), compile(X1, X2, Extras, Opts).
+% With no extras
+quick(X, Opts) :- quick(X,'',Opts).
+% With no options
+quick(X) :- quick(X, []).
+
+% Compile with the standard heading and options
+generic_compile(In, Out) :- compile(In, Out,
+':- [\'./standard.out.pl\'].
+', []).
+
+quick_generic(In) :- atom_concat(In, '.oopl', X1), atom_concat(In, '.out.pl', X2), generic_compile(X1, X2).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Checks if a predicate is a constructor for the class defined at this scope
 is_constructor(Scope, pred(Name, N), pred(Name, N)) :-

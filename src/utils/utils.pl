@@ -21,3 +21,10 @@ filter(_, [], []).
 % Add qoutes to an atom if needed
 add_qoutes(X, X) :- number(X), !.
 add_qoutes(X,Y) :- atomic_list_concat(['\'', X, '\''], Y).
+
+copy(File1,File2) :- 
+	open(File1,read,Stream1),
+	open(File2,write,Stream2),
+	copy_stream_data(Stream1,Stream2),
+	close(Stream1),
+	close(Stream2).
