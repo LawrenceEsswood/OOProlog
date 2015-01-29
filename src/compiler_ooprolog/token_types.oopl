@@ -1,0 +1,29 @@
+class class_header_token.
+	Name.
+	Parents.
+	class_header_token(Name, Parents).
+endclass.
+
+class class_token.
+	Hdr.
+	Bdy.
+	class_token(Hdr, Bdy).
+endclass.
+
+class clause_token.
+	Left.
+	Name.
+	N.
+	clause_token :- functor(Left, Name, N).
+endclass.
+
+% Until I implement super calls 
+
+class rule_token extends clause_token.
+	Right.
+	rule_token(Left, Right) :- functor(Left, Name, N).
+endclass.
+
+class fact_token extends clause_token.
+	fact_token(Left) :- functor(Left, Name, N).
+endclass.

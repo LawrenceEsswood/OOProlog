@@ -1,0 +1,5 @@
+class io.
+	In.
+	Out.
+	io(In, Out).
+endclass.

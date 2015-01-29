@@ -1,0 +1,112 @@
+:- oopl_include('./compiler_ooprolog/io.oopl').
+:- oopl_include('./compiler_ooprolog/token_types.oopl').
+
+	%%%%%%%%%%
+	% Parser %
+	%%%%%%%%%%
+
+% Define some operators to help parsing %
+
+:- op(100, yfx, ::).
+:- op(99, fx, class).
+:- op(100, xfx, extends).
+
+% Parser class, contains IO state to parse a single input stream. Extra information is written to the output stream.
+class parser.
+
+	IO.
+
+	parser(IO).
+
+	% proper entry point
+	parse_until_eof(Res) :- parse_defs(Res, end_of_file).
+
+	% Reads defs until eof or endclass %
+	parse_defs(DefLs, End) :-
+		read_term(IO::'In', T, [variable_names(Eqs)]),
+		not_unified(T, End),
+		!,
+		(not_unified(T, end_of_file) ; throw('Unexpected end of stream')),
+		(parse_def(Eqs, T, DefL) ; throw('Could not parse definition')),
+		bind_vars_to_name(Eqs),
+		append(DefL, DefR, DefLs),
+		parse_defs(DefR, End).
+	parse_defs([], _).
+
+	% Parses a single definition %
+	parse_def(Eqs, T, [Def]) :- var(T), !, parse_field(T, Def).
+	parse_def(Eqs, T, Defs) :- parse_include(T, Defs).
+	parse_def(Eqs, T, [Def]) :- parse_class(T, Def).
+	parse_def(Eqs, T, [Def]) :- parse_clause(Eqs, T, Def).
+
+	parse_include(:- oopl_include(Path), Defs) :-
+		open(Path, read, In), 
+		new(io, NewIO, In, IO::'Out'),
+		new(parser, P, NewIO),		
+		call(P::parse_defs, Defs, end_of_file),
+		close(In).
+
+	% Parses a field %
+	parse_field(X, field(X)) :- !.
+
+	% Parse a class header and body %
+	parse_class(T, class_def(C)) :-
+		parse_header(T, H),
+		parse_defs(Defs, endclass),
+		new(class_token, C, H, Defs).
+						
+	parse_header(class X extends Y, H) :- atomic(X), atomic(Y), !, new(class_header_token, H, X, [Y]).
+	parse_header(class X, H) :- atomic(X), new(class_header_token, H, X, []).
+
+	% Parses a normal prolog clause %
+	parse_clause(Eqs, :- Xs, rule(R)) :- !,
+		tag_atoms(Eqs, Xs, Ys),
+		new(rule_token, R, '', Ys).
+
+	parse_clause(Eqs, P :- Xs, rule(R)) :- !,
+		tag_predicate(Eqs, P, Pd),
+		tag_atoms(Eqs, Xs, Ys),
+		new(rule_token, R, Pd, Ys).
+
+	parse_clause(Eqs, P, fact(F)) :- tag_predicate(Eqs, P, Pd), new(fact_token, F, Pd).
+
+	tag_predicate(Eqs, P, P) :- atomic(P).
+	tag_predicate(Eqs, P, Pd) :- not(atomic(P)),
+		P =.. [Nm|Args],
+		add_functor_args(This::tag_atoms, [Eqs], F),
+		maplist(F, Args, Args2),
+		Pd =.. [Nm|Args].
+
+	is_named_member(X, [=(_,Y)|_]) :- X == Y.
+	is_named_member(X, [_|YS]) :- is_named_member(X, YS).
+
+	name_dont_care(Eqs, X) :- is_named_member(X, Eqs).
+	name_dont_care(Eqs, '_').
+
+	tag_atoms(Eqs, X, var(X)) :- var(X), !, name_dont_care(Eqs, X).
+	tag_atoms(Eqs, X, atom(X)) :- atomic(X), !.
+	tag_atoms(Eqs, P, compound(P2)) :- 
+		functor(P, _, _), P =.. [Nm|Args],
+		add_functor_args(This::tag_atoms, [Eqs], F),
+		maplist(F, Args, Args2),
+		P2 =.. [Nm|Args2].
+endclass.
+
+not_unified(A,B) :- not(unifiable(A,B,[])).
+
+% Appends a list to a disjunction
+comma_list_append([], P, P).
+comma_list_append([X|Xs],P,','(X,Pd)) :- comma_list_append(Xs, P, Pd).
+
+% Flattens a list of tuples into a single list %
+flatten_single([],[]).
+flatten_single([(V, NstLs)|Rest], Res) :- 
+	flatten_single(Rest, Restd), append(NstLs, [V|Restd], Res).
+
+% Flattens a list of tuples into two lists %
+flatten_pair([],[],[]).
+flatten_pair([(V, NstLs)|Rest],[V|RestV], Res) :- 
+	flatten_pair(Rest, RestV, RestNstLs), append(NstLs, RestNstLs, Res).
+
+bind_vars_to_name([=(X,X)|XS]) :- bind_vars_to_name(XS).
+bind_vars_to_name([]).
