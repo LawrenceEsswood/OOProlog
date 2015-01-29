@@ -1,0 +1,3 @@
+baz.
+baz(X).
+foo :- baz, (baz(baz);baz), baz.
