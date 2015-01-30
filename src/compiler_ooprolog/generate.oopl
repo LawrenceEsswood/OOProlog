@@ -163,7 +163,8 @@ class generator.
 	% Easier to just use new
 	make_class_type_body(Name, Fields, Predicates, Bdy, Constructor) :- 
 		maplist(add_qoutes, Fields, QFields),
-		expand_new(new('X', 'T', Name, QFields, Predicates, none, none, Constructor), _, NewComs),
+		next_tmp(T),
+		expand_new(new('X', 'T', Name, QFields, Predicates, none, none, Constructor), T, NewComs),
 		list_to_comma_functor([class_def__classType('X') | NewComs], Bdy).
 
 	expand_new(Command, Con, [build_class(Type, Class), ::(Type, Constructor, Con) , ((Con = none) ; Call)]) :- 
@@ -314,9 +315,11 @@ class generator.
 
 	resolve_args(_, R, R,[],[],[],_).
 
+	goal_funcs([',',';','not']).
+
 	contin_change(_, false, false).
-	contin_change(Nm, true, true) :- member(Nm, [',',';']).
-	contin_change(Nm, true, false) :- not(member(Nm, [',',';'])).
+	contin_change(Nm, true, true) :- goal_funcs(L), member(Nm, L).
+	contin_change(Nm, true, false) :- goal_funcs(L), not(member(Nm, L)).
 
 	resolve_args_comma_functor(compound(B), Scope, Reps, RepsOut2, Res) :-
 		functor(B, ',', _), !,
