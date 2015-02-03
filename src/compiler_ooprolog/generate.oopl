@@ -5,14 +5,38 @@
 class scope.
 	Prefix.
 	Names.
+	Mods.
 	Parent.
 	Hdr.
 	CS.
 	Top.
-	scope(Prefix, Names, Parent, Hdr, CS) :- Top = false.
-	scope :- Prefix = '_', Names = [], CS = [], Top = true, Parent = none.
-	is_top :- Parent::'Top' = true.
 
+	scope(Prefix, Names, Parent, Hdr, CS) :- Top = false.
+	scope(Defs) :- new(class_header_token, Hdr, '', []), Parent = top, Top = true, new_scope(Defs, '', '').
+	scope(Defs, Hdr, Parent) :- Top = false, new_scope(Defs, Hdr::'Name', Parent::'Prefix').
+
+	% Gets a name from a definition
+	get_name(class_def(Def), class(Def::'Hdr'::'Name')).
+	get_name(fact(Def), pred(Def::'Name',Def::'N')) :- Def::'Name' \= ''.
+	get_name(rule(Def), pred(Def::'Name',Def::'N')) :- Def::'Name' \= ''.
+	get_name(field(Name), field(Name)).
+
+	% Gets all the names defined at this scope
+	get_defined_names([],[]).
+	get_defined_names([D|Ds],[N|Ns]) :- get_name(D,N), !, get_defined_names(Ds, Ns).
+	get_defined_names([_|Ds], Ns) :- get_defined_names(Ds, Ns).
+
+	% Creates a new scope from a list of definitions //TODO: Pay attenton to no munge
+	new_scope(Defs, Name, ParentPrefix) :-
+		atomic_list_concat(['_', Name, ParentPrefix], Prefix),
+		get_defined_names(Defs, Names),
+		filter(This::new_class_scope, Defs, CS).
+
+	new_class_scope(class_def(C), cs(C::'Hdr'::'Name', ClassScope)) :- new(scope, ClassScope, C::'Bdy', C::'Hdr', This).
+
+	is_top :- Top = true.
+
+	get_mods(P, M) :- member((P,M), Mods).
 	% Save the top of the scope to the output for the interpreter
 
 	dump(IO) :-
@@ -79,7 +103,7 @@ class generator.
 	get_field_name(field(Name), Name).
 
 	% Checks if a predicate is a constructor for the class defined at this scope
-	is_constructor(Scope, pred(Name, N), pred(Name, N)):- Name = Scope::'Hdr'::'Name'.
+	is_constructor(Scope, pred(Name, N), pred(Name, N)):- Name \= '', Name = Scope::'Hdr'::'Name'.
 
 	is_not_constructor(Scope, P, P) :- not(is_constructor(Scope, P, _)).
 
@@ -177,34 +201,8 @@ class generator.
 	% FIXME this might not print properly
 	make_from_fact(Nm, ArgLst, Commands, (P1 :- P2)) :- Commands \= [], P1 =.. [Nm|ArgLst], list_to_comma_functor(Commands, P2).
 
-	% Gets a name from a definition
-	get_name(class_def(Def), class(Def::'Hdr'::'Name')).
-	get_name(fact(Def), pred(Def::'Name',Def::'N')) :- Def::'Name' \= ''.
-	get_name(rule(Def), pred(Def::'Name',Def::'N')) :- Def::'Name' \= ''.
-	get_name(field(Name), field(Name)).
-
-	% Gets all the names defined at this scope
-	get_defined_names([],[]).
-	get_defined_names([D|Ds],[N|Ns]) :- get_name(D,N), !, get_defined_names(Ds, Ns).
-	get_defined_names([_|Ds], Ns) :- get_defined_names(Ds, Ns).
-
-	% Creates a new scope from a list of definitions
-	new_scope(Defs, Hd, OldScope, Name, Scope) :- 
-		new(scope, Scope, NewName, Defined, OldScope, Hd, ClassScopes),
-		(	(member('no_munge', Opts), NewName = '');
-			atomic_list_concat(['_', Name, OldScope::'Prefix'], NewName)
-		),
-		get_defined_names(Defs, Defined),
-		all_new_class_scopes(Defs, Scope, ClassScopes).
-
 	% Recreates the top scope from given names	
 	load_scope(Names, Scope) :- new(scope, Scope, '__', Names, top, top, []).
-
-	all_new_class_scopes(Defs, Scope, CSS) :- 
-		add_functor_args(This::new_class_scope, [Scope], F),
-		filter(F, Defs, CSS).
-
-	new_class_scope(ScopeAbove, class_def(C), cs(C::'Hdr'::'Name', ClassScope)) :- new_scope(C::'Bdy', C::'Hdr', ScopeAbove, C::'Hdr'::'Name', ClassScope).
 
 	% looks up a name to get its containing scope
 	lookup(Scope, Arg, ScopeRes) :- lookup_nesting(Scope, Arg, ScopeRes), !.
@@ -227,7 +225,7 @@ class generator.
 	%Walks the parse tree finding out names to create scope
 
 	% Top level predicate for generating prolog
-	generate_defs_top(Defs) :- new(scope, TScope), new_scope(Defs, top, TScope, '', TopScope), generate_defs(Defs, TopScope), (member('no_interpret',Opts);call(TopScope::dump, IO)).
+	generate_defs_top(Defs) :- new(scope, TopScope, Defs), generate_defs(Defs, TopScope), (member('no_interpret',Opts);call(TopScope::dump, IO)).
 
 	% Generates prolog from a list of definitions
 	generate_defs([Def|Defs], Scope) :- generate_def(Def, Scope), generate_defs(Defs, Scope).
@@ -343,10 +341,11 @@ class generator.
 			append(Commands, [Bd], Res)
 		)).
 
+	%add_this(Rule, Ls, _, Ls) :- member('static', Rule::'Mods'), !.
 	add_this(Ls, Scope, Ls) :- call(Scope::is_top).
 	add_this(Ls, Scope, ['This'|Ls]) :- not(call(Scope::is_top)).
 
-	generate_def(fact(FT), Scope) :- 
+	generate_def(fact(FT), Scope) :-
 		FT::'Left' =.. [Nm|ArgLstIn],
 		resolve_args(Scope, [], _, ArgLstIn, ArgLst, Commands, false),
 		make_predicate_name(pred(Nm, FT::'N'), Scope, NewName),
@@ -355,11 +354,11 @@ class generator.
 		write_standard(IO::'Out', Res), write(IO::'Out', '.\n').
 
 	%FIXME, we can look through all the replacements to work out if we need this
-	generate_def(rule(RT), Scope) :-
+	generate_def(rule(RT), Scope) :- 
 		RT::'Left' =.. [Nm|ArgLstIn],
-		resolve_args_comma_functor(RT::'Right', Scope, [], OutReps, Res),
-		resolve_args(Scope, OutReps, _, ArgLstIn, ArgLst, Commands, false),
-		append(Res, Commands, Body),
+		resolve_args(Scope, [], OutReps, ArgLstIn, ArgLst, Commands, false),
+		resolve_args_comma_functor(RT::'Right', Scope, OutReps, _, Res),
+		append(Commands, Res, Body),
 		make_predicate_name(pred(Nm, RT::'N'), Scope, NewName),
 		add_this(ArgLst, Scope, ArgLst2),
 		Pd =.. [NewName | ArgLst2],
@@ -373,6 +372,8 @@ class generator.
 		write_list(IO::'Out', Supers).
 
 	%Fields don't generate anything
-	generate_def(field(_), Scope) :- not(call(Scope::is_top)); throw('Fields must occur within a class').
+	generate_def(field(Nm), Scope) :- not(call(Scope::is_top)); compile_exception(['Field \'', Nm, '\' defined outside of a class.']).
 
+	%Todo: get some line number action
+	compile_exception(Ms) :- throw_atoms(Ms).
 endclass.

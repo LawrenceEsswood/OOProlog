@@ -14,16 +14,19 @@ class clause_token.
 	Left.
 	Name.
 	N.
-	clause_token :- functor(Left, Name, N).
+	Mods.
+	split_fnc :- functor(Left, Name, N).
 endclass.
 
 % Until I implement super calls 
 
 class rule_token extends clause_token.
 	Right.
-	rule_token(Left, Right) :- functor(Left, Name, N).
+	rule_token(Left, Right) :- split_fnc, Mods = [].
+	add_mods(Mds, Tkn) :- new(rule_token, Left, Right, Tkn), append(Mds, Mods, Tkn::'Mods').
 endclass.
 
 class fact_token extends clause_token.
-	fact_token(Left) :- functor(Left, Name, N).
+	fact_token(Left) :- split_fnc, Mods = [].
+	add_mods(Mds, Tkn) :- new(fact_token, Left, Tkn), append(Mds, Mods, Tkn::'Mods').
 endclass.

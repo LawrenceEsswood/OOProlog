@@ -10,7 +10,7 @@
 :- op(100, yfx, ::).
 :- op(99, fx, class).
 :- op(100, xfx, extends).
-
+:- op(1199, fy, static).
 % Parser class, contains IO state to parse a single input stream. Extra information is written to the output stream.
 class parser.
 
@@ -59,6 +59,12 @@ class parser.
 	parse_header(class X, H) :- atomic(X), new(class_header_token, H, X, []).
 
 	% Parses a normal prolog clause %
+	parse_clause(Eqs, :-(static(A), B), R) :- parse_clause(Eqs, static(A :- B), R).
+
+	parse_clause(Eqs, static P, R2) :- !,
+		parse_clause(Eqs, P, R),
+		call(R::'add_mods',[static],R2).
+
 	parse_clause(Eqs, :- Xs, rule(R)) :- !,
 		tag_atoms(Eqs, Xs, Ys),
 		new(rule_token, R, '', Ys).
