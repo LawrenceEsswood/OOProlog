@@ -344,12 +344,12 @@ generate_def(S, fact(P), Scope) :-
 	out_stream(S, Out), write_standard(Out, Res), write(Out, '.\n').
 
 %FIXME, we can look through all the replacements to work out if we need this
-generate_def(S, rule(P, B), Scope) :-
+generate_def(S, rule(P, B), Scope) :- 
 	P =.. [Nm|ArgLstIn],
 	length(ArgLstIn, N),
-	resolve_args_comma_functor(B, Scope, [], OutReps, Res),
-	resolve_args(Scope, OutReps, _, ArgLstIn, ArgLst, Commands, false),
-	append(Res, Commands, Body),
+	resolve_args(Scope, [], OutReps, ArgLstIn, ArgLst, Commands, false),
+	resolve_args_comma_functor(B, Scope, OutReps, _, Res),
+	append(Commands, Res, Body),
 	make_predicate_name(pred(Nm, N), Scope, NewName),
 	add_this(ArgLst, Scope, ArgLst2),
 	Pd =.. [NewName | ArgLst2],
