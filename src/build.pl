@@ -1,5 +1,6 @@
 :- ['./utils/utils.pl'].
 
+paths(milestone, '../milestone/').
 paths(build, '../build/').
 paths(oopl, './compiler_ooprolog/').
 paths(pl, './compiler_prolog/').
@@ -31,6 +32,9 @@ copy_from_prolog :-
 	copy_file_from_dir(pl, build, 'generate.pl'),
 	copy_file_from_dir(pl, build, 'interpret.pl').
 
+copy_from_milestone :-
+	copy_file_from_dir(milestone, build, 'generate.pl').
+
 build_from_ooprolog :- 
 	file(oopl, 'generate.oopl', InPath),
 	file(tmp, 'generate.pl', OutPath),
@@ -38,16 +42,17 @@ build_from_ooprolog :-
 
 copy_from_tmp :- copy_file_from_dir(tmp, build, 'generate.pl').
 
+restart_bootstrap :- copy_from_prolog, load_compiler, build_from_ooprolog, copy_from_tmp.
 cycle_compiler :- load_compiler, build_from_ooprolog, copy_from_tmp.
 
 % Starting point using prolog compiler
 %main :- copy_from_prolog, load_compiler, build_standard.
 
 %some compatability stuff
-compile(In,Out,Extras,Opts):- p__compile(In,Out,Extras,Opts).
-quick(X,Extras,Opts):- p__quick(X,Extras,Opts).
-quick(X,Opts):- p__quick(X,Opts).
-quick(X):- p__quick(X).
-generic_compile(In,Out):- p__generic_compile(In,Out).
-generic_compile(In,Out,Opts):- p__generic_compile(In,Out,Opts).
-quick_generic(In):- p__quick_generic(In).
+compile(In,Out,Extras,Opts):- p_compile(In,Out,Extras,Opts).
+quick(X,Extras,Opts):- p_quick(X,Extras,Opts).
+quick(X,Opts):- p_quick(X,Opts).
+quick(X):- p_quick(X).
+generic_compile(In,Out):- p_generic_compile(In,Out).
+generic_compile(In,Out,Opts):- p_generic_compile(In,Out,Opts).
+quick_generic(In):- p_quick_generic(In).
