@@ -23,10 +23,12 @@ endclass.
 class rule_token extends clause_token.
 	Right.
 	rule_token(Left, Right) :- split_fnc, Mods = [].
-	add_mods(Mds, Tkn) :- new(rule_token, Left, Right, Tkn), append(Mds, Mods, Tkn::'Mods').
+	rule_token(Left, Right, Mods) :- split_fnc.
+	add_mods(Mds, Tkn) :- append(Mds, Mods, NewMods), new(rule_token, Tkn, Left, Right, NewMods).
 endclass.
 
 class fact_token extends clause_token.
 	fact_token(Left) :- split_fnc, Mods = [].
-	add_mods(Mds, Tkn) :- new(fact_token, Left, Tkn), append(Mds, Mods, Tkn::'Mods').
+	fact_token(Left, Mods) :- split_fnc.
+	add_mods(Mds, Tkn) :- append(Mds, Mods, NewMods), new(fact_token, Tkn, Left, NewMods).
 endclass.

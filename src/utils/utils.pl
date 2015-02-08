@@ -1,3 +1,15 @@
+% Sums a list
+sum([], 0).
+sum([N|Ns], Sum) :- sum(Ns, SumA), Sum is SumA + N.
+
+% Counts occurences of terms
+count_occurences(X, X, 1).
+count_occurences(X, Y, 0) :- X \= Y, atomic(Y).
+count_occurences(X, Y, Sum) :- X \= Y, 
+	not(atomic(Y)), Y =.. [_|Ys], 
+	maplist(count_occurences(X), Ys, Ns),
+	sum(Ns, Sum).
+
 % Add args to a compound
 add_functor_args(F, Args, F2) :- 
 	F =.. [Nm|Args1],
@@ -29,6 +41,10 @@ write_list(Out, [L|LS]) :-
 filter(Rule, [D|Defs],[N|Names]) :- call(Rule, D, N), !, filter(Rule, Defs, Names).
 filter(Rule, [_|Defs], Names) :- filter(Rule, Defs, Names).
 filter(_, [], []).
+
+partition(_,[],[],[]).
+partition(Rule, [X|Xs], [X|L], R) :- call(Rule, X), !, partition(Rule, Xs, L, R).
+partition(Rule, [X|Xs], L, [X|R]) :- partition(Rule, Xs, L, R).
 
 escapes(['\'','\\']).
 

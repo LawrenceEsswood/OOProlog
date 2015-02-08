@@ -4,16 +4,14 @@
 % Represents a scope level, contains lot of meta data
 class scope.
 	Prefix.
-	Names.
-	Mods.
 	Parent.
 	Hdr.
 	CS.
 	Top.
+	Defs.
 
-	scope(Prefix, Names, Parent, Hdr, CS) :- Top = false.
-	scope(Defs) :- new(class_header_token, Hdr, '', []), Parent = top, Top = true, new_scope(Defs, '', '').
-	scope(Defs, Hdr, Parent) :- Top = false, new_scope(Defs, Hdr::'Name', Parent::'Prefix').
+	scope(Defs) :- new(class_header_token, Hdr, '', []), Parent = top, Top = true, new_scope('', ''), error_checks.
+	scope(Defs, Hdr, Parent) :- Top = false, new_scope(Hdr::'Name', Parent::'Prefix'), error_checks.
 
 	% Gets a name from a definition
 	get_name(class_def(Def), class(Def::'Hdr'::'Name')).
@@ -21,31 +19,89 @@ class scope.
 	get_name(rule(Def), pred(Def::'Name',Def::'N')) :- Def::'Name' \= ''.
 	get_name(field(Name), field(Name)).
 
+	%gets a field name and qoutes its
+	get_field_name(field(Name), Name).
+	get_field_name_qoute(X, Y) :- get_field_name(X, Y).
+
 	% Gets all the names defined at this scope
 	get_defined_names([],[]).
 	get_defined_names([D|Ds],[N|Ns]) :- get_name(D,N), !, get_defined_names(Ds, Ns).
 	get_defined_names([_|Ds], Ns) :- get_defined_names(Ds, Ns).
 
 	% Creates a new scope from a list of definitions //TODO: Pay attenton to no munge
-	new_scope(Defs, Name, ParentPrefix) :-
+	new_scope(Name, ParentPrefix) :-
 		atomic_list_concat(['_', Name, ParentPrefix], Prefix),
-		get_defined_names(Defs, Names),
 		filter(This::new_class_scope, Defs, CS).
 
 	new_class_scope(class_def(C), cs(C::'Hdr'::'Name', ClassScope)) :- new(scope, ClassScope, C::'Bdy', C::'Hdr', This).
 
 	is_top :- Top = true.
 
-	get_mods(P, M) :- member((P,M), Mods).
 	% Save the top of the scope to the output for the interpreter
 
 	dump(IO) :-
-		write(IO::'Out', defined_names(Names)),
-		write(IO::'Out', '.
-		:- [''./interpret.pl''].
-		:- interpret.
+		get_defined_names(Defs, Names),
+		write_standard(IO::'Out', defined_names(Names)),
+		write_standard(IO::'Out', '.
+:- [''./interpret.pl''].
+:- interpret.
 	').
+
+	% looks up a name to get its containing scope
+	lookup(Arg, ScopeRes) :- lookup_nesting(Arg, ScopeRes), !.
+	lookup(Arg, ScopeRes) :- lookup_parent(Arg, ScopeRes).
+
+	lookup_here(Arg, This) :- member(Def, Defs), get_name(Def, Arg).
+	lookup_nesting(Arg, Res) :- not(is_top), call(Parent::lookup_nesting, Arg, Res).
+	lookup_nesting(Arg, Res) :- lookup_here(Arg, Res).
+	lookup_parent(Arg, Res) :-
+		not(is_top),
+		[P] = Hdr::'Parents',
+		get_parent_scope(P, PScope),
+		call(PScope::lookup_parent, Arg, Res).
+	lookup_parent(Arg, Res) :- lookup_here(Arg, Res).
+
+	% trys to find a scope of a certain class
+	scope_of(Pname, Scp) :- member(cs(Pname, Scp), CS).
 	
+	% combines a lookup and scope of to get the scope of a classes parent
+	get_parent_scope(Pname, Scp) :- 
+		((lookup(class(Pname), PDefScope) , !) ; throw_atoms(['Could not find a class of name ', Pname,'.'])),
+		((call(PDefScope::scope_of, Pname, Scp), !) ; throw_atoms([Pname, ' is not a class.'])).
+
+	% Checks if a predicate is a constructor for the class defined at this scope
+	pred_is_constructor(pred(Hdr::'Name', _)) :- Hdr::'Name' \= ''.
+	is_constructor(Def, pred(Hdr::'Name', N)):- get_name(Def, pred(Hdr::'Name', N)), Hdr::'Name' \= ''.
+	is_not_constructor(Def, pred(Nm, N)) :- not(is_constructor(Def, _)), get_name(Def, pred(Nm, N)).
+	% Returns a list of constructors
+	get_constructors(Cons) :- filter(This::is_constructor, Defs, Cons).
+	get_non_constructors(Cons) :- filter(This::is_not_constructor, Defs, Cons).
+	get_qouted_fields(Fields) :- filter(This::get_field_name_qoute, Defs, Fields).
+
+	get_pred_mods(Arg, Mods) :- member(Def, Defs), get_name(Def, Arg), Def =.. [_, C], Mods = C::'Mods'.
+	pred_has_mod(Mod, Arg) :- get_pred_mods(Arg, Mods), member(Mod, Mods).
+
+	pred_to_cononical_name(pred(Nm, N), Nm/N).
+
+	pred_cls(rule(RT), RT).
+	pred_cls(fact(RT), RT).
+
+	get_mod_conflict(Def, OtherDefs) :-
+		pred_cls(Def, A),
+		member(Def2, OtherDefs),
+		pred_cls(Def2, B),
+		A::'Mods' \= B::'Mods'.
+	any_mod_conflict([]).
+	any_mod_conflict([X|XS]) :- not(get_mod_conflict(X,XS)), any_mod_conflict(XS).
+	any_mod_conflict([X|_]) :- 
+		get_name(X, Nm),
+		pred_to_cononical_name(Nm, CNm),
+		throw_atoms(['Predicate ', CNm , ' defined as both static and non static']).
+
+	error_checks :- 
+		% Check we do not have any predicates with different modfifiers
+		any_mod_conflict(Defs).
+
 endclass.
 
 	%%%%%%%%%%%%
@@ -100,25 +156,14 @@ class generator.
 		generate_defs_top(Defs), !,
 		close(OutS).
 
-	get_field_name(field(Name), Name).
-
-	% Checks if a predicate is a constructor for the class defined at this scope
-	is_constructor(Scope, pred(Name, N), pred(Name, N)):- Name \= '', Name = Scope::'Hdr'::'Name'.
-
-	is_not_constructor(Scope, P, P) :- not(is_constructor(Scope, P, _)).
-
 	% Creates a tuple of the original predicate, and its scoped name.
 	pair_predicate(Scope, Name, (Name, Resolved)) :-
 		make_predicate_name(Name, Scope, Resolved).
 
-	%gets a field name and qoutes its
-	get_field_name_qoute(X, Y) :- get_field_name(X, Y).
-
 	%TODO allow more than one parent
 	find_parents_definitions(_, [], [],[],[]).
 	find_parents_definitions(Scope, [Parent], Fields, Predicates, SuperPreds) :-
-		(lookup(Scope, class(Parent), PDefScope) ; throw_atoms(['Could not find a class of name ', Parent,'.'])),
-		(scope_of(PDefScope, Parent, ParentScope) ; throw_atoms([Parent, ' is not a class.'])),
+		call(Scope::get_parent_scope, Parent, ParentScope),
 		find_class_definitions(ParentScope, ParentScope::'Hdr', Fields, Predicates, SuperPreds).
 
 	make_super_call(CRes, PRes, N , L :- R) :- 
@@ -138,11 +183,14 @@ class generator.
 
 
 	find_class_definitions(Scope, Hchild, Fields, Predicates, SuperPreds) :-
-		filter(This::get_field_name_qoute,Scope::'Names',ThisFields),
-		add_functor_args(This::is_not_constructor, [Scope], F),
-		filter(F, Scope::'Names', Names2),
-		add_functor_args(This::pair_predicate, [Scope], F2),
-		filter(F2, Names2, ThisPredicates),
+		call(Scope::get_qouted_fields, ThisFields),
+		call(Scope::get_non_constructors, AllPreds),
+
+		add_functor_args(Scope::'pred_has_mod', ['static'], PHM),
+		partition(PHM, AllPreds, _, NonStaticPreds),
+
+		add_functor_args(This::pair_predicate, [Scope], F),
+		filter(F, NonStaticPreds, ThisPredicates),
 		find_parents_definitions(Scope, Hchild::'Parents', ParentFields, ParentPredicates, ParentSuperPreds),
 		(intersection(ThisFields, ParentFields,[]) ; throw('Cannot redefine a parents field.')),  %Might allow redefinition, use union
 		append(ParentFields, ThisFields, Fields),
@@ -162,14 +210,23 @@ class generator.
 
 	% Generates the rule that constructs a class type
 	make_class(Def, ScopeAbove, Scope, SuperPreds) :-
-		find_class_definitions(Scope, Def::'Hdr', Fields, Predicates, SuperPreds),
-		get_unique_predicates(Predicates, UPredicates),
+		find_class_definitions(Scope, Def::'Hdr', Fields, PredicatesPaired, SuperPreds),
+		get_unique_predicates(PredicatesPaired, UPredicates),
+
+		call(Scope::get_non_constructors, NonConstructors),
+		add_functor_args(Scope::'pred_has_mod', ['static'], PHM),
+		partition(PHM, NonConstructors, Statics, _),
+		add_functor_args(This::pair_predicate, [Scope], F),
+		maplist(F, Statics, StaticsPaired),
+		get_unique_predicates(StaticsPaired, UStaticsPaired),
+
 		make_class_type_functor(Def::'Hdr'::'Name', ScopeAbove, Func),
 		make_class_type_args(ScopeAbove, Args),
-		add_functor_args(This::is_constructor, [Scope], F),
-		filter(F, Scope::'Names', Constructors),
+
+		call(Scope::get_constructors, Constructors),
 		none_if_empty(Scope, Constructors, Constructor),
-		make_class_type_body(Def::'Hdr'::'Name', Fields, UPredicates, Bdy, Constructor),
+
+		make_class_type_body(Def::'Hdr'::'Name', Fields, UPredicates, Bdy, Constructor, UStaticsPaired),
 		P =.. [Func | Args],
 		write_standard(IO::'Out', (P :- Bdy)), write(IO::'Out', '.\n').
 
@@ -185,13 +242,14 @@ class generator.
 	% The compound the represents a class type 
 	make_class_type_args(Scope, Bdy) :- add_this(['T'], Scope, Bdy).
 	% Easier to just use new
-	make_class_type_body(Name, Fields, Predicates, Bdy, Constructor) :- 
+	make_class_type_body(Name, Fields, Predicates, Bdy, Constructor, Statics) :- 
 		maplist(add_qoutes, Fields, QFields),
 		next_tmp(T),
-		expand_new(new('X', 'T', Name, QFields, Predicates, none, none, Constructor), T, NewComs),
+		expand_new(new('X', 'T', Name, QFields, Predicates, none, none, Constructor), T, Statics, NewComs),
 		list_to_comma_functor([class_def__classType('X') | NewComs], Bdy).
 
-	expand_new(Command, Con, [build_class(Type, Class), ::(Type, Constructor, Con) , ((Con = none) ; Call)]) :- 
+	expand_new(Command, Con, Result) :- expand_new(Command, Con, [], Result).
+	expand_new(Command, Con, Statics, [build_class(Type, Class, Statics), ::(Type, Constructor, Con) , ((Con = none); Call)]) :- 
 		Command =.. [new, Type, Class | Args],
 		add_qoutes('Constructor', Constructor),
 		Call =.. [call, Con, Class | Args].
@@ -201,26 +259,8 @@ class generator.
 	% FIXME this might not print properly
 	make_from_fact(Nm, ArgLst, Commands, (P1 :- P2)) :- Commands \= [], P1 =.. [Nm|ArgLst], list_to_comma_functor(Commands, P2).
 
-	% Recreates the top scope from given names	
+	% Recreates the top scope from given names //TODO obselete
 	load_scope(Names, Scope) :- new(scope, Scope, '__', Names, top, top, []).
-
-	% looks up a name to get its containing scope
-	lookup(Scope, Arg, ScopeRes) :- lookup_nesting(Scope, Arg, ScopeRes), !.
-	lookup(Scope, Arg, ScopeRes) :- lookup_parent(Scope, Arg, ScopeRes).
-
-	lookup_here(Scope, Arg, Scope) :- member(Arg, Scope::'Names').
-	lookup_nesting(Scope, Arg, Res) :- not(call(Scope::is_top)), lookup_nesting(Scope::'Parent', Arg, Res).
-	lookup_nesting(Scope, Arg, Res) :- lookup_here(Scope, Arg, Res).
-	lookup_parent(Scope, Arg, Res) :-
-		not(call(Scope::is_top)),
-		[P] = Scope::'Hdr'::'Parents',
-		lookup(Scope, class(P), PDefScope),
-		scope_of(PDefScope, P, PScope),
-		lookup_parent(PScope, Arg, Res).
-	lookup_parent(Scope, Arg, Res) :- lookup_here(Scope, Arg, Res).
-
-	%trys to find a scope of a certain class
-	scope_of(Scope, Pname, Scp) :- member(cs(Pname, Scp), Scope::'CS').
 
 	%Walks the parse tree finding out names to create scope
 
@@ -254,15 +294,16 @@ class generator.
 		append(Cmds1, Cmds2, Cmds3),
 		append(Cmds3, [::(Xd,Yd,Tmp)], Cmds4).
 
-	%Atoms might refer to a class/predicate
+	%Atoms might refer to a predicate
 	resolve_arg(Scope, Reps, Reps, atom(X), P, [], true) :-
-		lookup(Scope, pred(X, 0), PredScope), !,
+		call(Scope::lookup, pred(X, 0), PredScope), !,
 		make_predicate_name(pred(X, 0), PredScope, Nm),
-		add_this([], PredScope, Args),
+		add_this([], PredScope, pred(X, 0), Args),
 		P =.. [Nm|Args].
 
+	%Atoms may refer to a class
 	resolve_arg(Scope, Reps, [(atom(X),Tmp)|Reps], atom(X), Tmp, [C], _) :-
-		lookup(Scope, class(X), DefScp),!,
+		call(Scope::lookup, class(X), DefScp),!,
 		next_tmp(Tmp),
 		make_class_type_functor(X, DefScp, F),
 		add_this([Tmp], DefScp, Ls),
@@ -272,7 +313,7 @@ class generator.
 
 	%Variables might be members
 	resolve_arg(Scope, Reps, [(var(Arg),Tmp)|Reps], var(Arg), Tmp, [::('This', ArgQ, Tmp)], _) :-
-		lookup(Scope, field(Arg), _), !,
+		call(Scope::lookup, field(Arg), _), !,
 		add_qoutes(Arg, ArgQ),
 		next_tmp(Tmp).
 
@@ -285,11 +326,12 @@ class generator.
 	resolve_arg(Scope, Reps, RepsOut, compound(P), Pd, Commands, true) :- 
 		P =.. [Nm|Args],
 		length(Args, N),
-		(lookup(Scope, pred(Nm, N), PredScope)), !,
-		(is_not_constructor(PredScope, pred(Nm, N), _) ; throw('Cannot directly call a constructor.')),
+		call(Scope::lookup, pred(Nm, N), PredScope),
+		!,
+		(not(call(PredScope::'pred_is_constructor', pred(Nm, N))); throw('Cannot directly call a constructor.')),
 		make_predicate_name(pred(Nm, N), PredScope, NewName),
 		resolve_args(Scope, Reps, RepsOut, Args, Args2, Commands, false),
-		add_this(Args2, PredScope, Args3),
+		add_this(Args2, PredScope, pred(Nm, N), Args3),
 		Pd =.. [NewName|Args3].
 
 	% This is the case where we have a compound we cant lookup, 
@@ -341,32 +383,40 @@ class generator.
 			append(Commands, [Bd], Res)
 		)).
 
-	%add_this(Rule, Ls, _, Ls) :- member('static', Rule::'Mods'), !.
-	add_this(Ls, Scope, Ls) :- call(Scope::is_top).
-	add_this(Ls, Scope, ['This'|Ls]) :- not(call(Scope::is_top)).
+	add_this(N, Ls, Scope, Pred, Ls2) :- N >= 1, add_this(Ls, Scope, Pred, Ls2).
+	add_this(0, Ls, Scope, Pred, Ls) :- (call(Scope::is_top) ; call(Scope::pred_has_mod, 'static', Pred)), !.
+	add_this(0, Ls, _, _, ['_'|Ls]).
+
+	add_this(Ls, Scope, Pred, Ls) :- (call(Scope::is_top) ; call(Scope::pred_has_mod, 'static', Pred)), !.
+	add_this(Ls, _, _, ['This'|Ls]).
+
+	add_this(Ls, Scope, Ls) :- call(Scope::is_top), !.
+	add_this(Ls, _, ['This'|Ls]).
 
 	generate_def(fact(FT), Scope) :-
 		FT::'Left' =.. [Nm|ArgLstIn],
 		resolve_args(Scope, [], _, ArgLstIn, ArgLst, Commands, false),
 		make_predicate_name(pred(Nm, FT::'N'), Scope, NewName),
-		add_this(ArgLst, Scope, ArgLst2),
+		count_occurences('This', (Commands, ArgLst), Ns),
+		add_this(Ns, ArgLst, Scope, pred(Nm, FT::'N'), ArgLst2),
 		make_from_fact(NewName, ArgLst2, Commands, Res),
 		write_standard(IO::'Out', Res), write(IO::'Out', '.\n').
 
 	%FIXME, we can look through all the replacements to work out if we need this
-	generate_def(rule(RT), Scope) :- 
+	generate_def(rule(RT), Scope) :-
 		RT::'Left' =.. [Nm|ArgLstIn],
 		resolve_args(Scope, [], OutReps, ArgLstIn, ArgLst, Commands, false),
 		resolve_args_comma_functor(RT::'Right', Scope, OutReps, _, Res),
 		append(Commands, Res, Body),
 		make_predicate_name(pred(Nm, RT::'N'), Scope, NewName),
-		add_this(ArgLst, Scope, ArgLst2),
+		count_occurences('This', (Body, ArgLst), Ns),
+		add_this(Ns, ArgLst, Scope, pred(Nm, RT::'N'), ArgLst2),
 		Pd =.. [NewName | ArgLst2],
 		list_to_comma_functor(Body, CBdy),
 		write_standard(IO::'Out', (Pd :- CBdy)), write(IO::'Out', '.\n').
 
 	generate_def(class_def(C), Scope) :-
-		scope_of(Scope, C::'Hdr'::'Name', NewScope),
+		call(Scope::scope_of, C::'Hdr'::'Name', NewScope),
 		make_class(C, Scope, NewScope, Supers),
 		generate_defs(C::'Bdy', NewScope),
 		write_list(IO::'Out', Supers).
