@@ -16,6 +16,14 @@ class clause_token.
 	N.
 	Mods.
 	split_fnc :- functor(Left, Name, N).
+	check_mod_allowed(Mod) :- 
+		(	not(member(Mod, Mods)), 
+			(	not(member(Mod, ['public', 'private', 'protected']))
+				;
+				intersection(Mods, ['public', 'private', 'protected'], [])
+			)
+		)
+		; throw_atoms(['Illegal modifier ', Mod]).
 endclass.
 
 % Until I implement super calls 
@@ -24,11 +32,11 @@ class rule_token extends clause_token.
 	Right.
 	rule_token(Left, Right) :- split_fnc, Mods = [].
 	rule_token(Left, Right, Mods) :- split_fnc.
-	add_mods(Mds, Tkn) :- append(Mds, Mods, NewMods), new(rule_token, Tkn, Left, Right, NewMods).
+	add_mod(Mod, Tkn) :- check_mod_allowed(Mod), new(rule_token, Tkn, Left, Right, [Mod|Mods]).
 endclass.
 
 class fact_token extends clause_token.
 	fact_token(Left) :- split_fnc, Mods = [].
 	fact_token(Left, Mods) :- split_fnc.
-	add_mods(Mds, Tkn) :- append(Mds, Mods, NewMods), new(fact_token, Tkn, Left, NewMods).
+	add_mod(Mod, Tkn) :- check_mod_allowed(Mod), new(fact_token, Tkn, Left, [Mod|Mods]).
 endclass.

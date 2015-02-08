@@ -11,6 +11,10 @@
 :- op(99, fx, class).
 :- op(100, xfx, extends).
 :- op(1199, fy, static).
+:- op(1199, fy, public).
+:- op(1199, fy, private).
+:- op(1199, fy, protected).
+
 % Parser class, contains IO state to parse a single input stream. Extra information is written to the output stream.
 class parser.
 
@@ -55,17 +59,31 @@ class parser.
 		parse_defs(Defs, endclass),
 		new(class_token, C, H, Defs).
 						
-	parse_header(class X extends Y, H) :- atomic(X), atomic(Y), !, new(class_header_token, H, X, [Y]).
-	parse_header(class X, H) :- atomic(X), new(class_header_token, H, X, []).
+	 parse_header(class X extends Y, H) :- atomic(X), atomic(Y), !, new(class_header_token, H, X, [Y]).
+	 parse_header(class X, H) :- atomic(X), new(class_header_token, H, X, []).
 
 	% Parses a normal prolog clause %
-	parse_clause(Eqs, :-(static(A), B), R) :- parse_clause(Eqs, static(A :- B), R).
+	all_mods(['static', 'public', 'private', 'protected']).
 
-	parse_clause(Eqs, static P, R2) :- !,
+	parse_clause(Eqs, :-(ModA, B), R) :- 
+	 	ModA =.. [Mod, A],
+	 	all_mods(AllMods),
+	 	member(Mod, AllMods),
+	 	!,
+	 	ModP =.. [Mod, A :- B],
+	 	parse_clause(Eqs, ModP, R).
+
+	parse_clause(Eqs, ModP, R2) :-
+	 	ModP =.. [Mod, P],
+	 	all_mods(AllMods),
+	 	member(Mod, AllMods),
+	 	!,
 		parse_clause(Eqs, P, R),
-		call(R::'add_mods',[static],R2).
+		R =.. [F, Arg],
+		call(Arg::'add_mod', Mod, Arg2),
+		R2 =.. [F, Arg2].
 
-	parse_clause(Eqs, :- Xs, rule(R)) :- !,
+	 parse_clause(Eqs, :- Xs, rule(R)) :- !,
 		tag_atoms(Eqs, Xs, Ys),
 		new(rule_token, R, '', Ys).
 
@@ -74,24 +92,24 @@ class parser.
 		tag_atoms(Eqs, Xs, Ys),
 		new(rule_token, R, Pd, Ys).
 
-	parse_clause(Eqs, P, fact(F)) :- tag_predicate(Eqs, P, Pd), new(fact_token, F, Pd).
+	 parse_clause(Eqs, P, fact(F)) :- tag_predicate(Eqs, P, Pd), new(fact_token, F, Pd).
 
-	tag_predicate(_, P, P) :- atomic(P).
-	tag_predicate(Eqs, P, Pd) :- not(atomic(P)),
+	 tag_predicate(_, P, P) :- atomic(P).
+	 tag_predicate(Eqs, P, Pd) :- not(atomic(P)),
 		P =.. [Nm|Args],
 		add_functor_args(This::tag_atoms, [Eqs], F),
 		maplist(F, Args, Args2),
 		Pd =.. [Nm|Args2].
 
-	is_named_member(X, [=(_,Y)|_]) :- X == Y.
-	is_named_member(X, [_|YS]) :- is_named_member(X, YS).
+	 is_named_member(X, [=(_,Y)|_]) :- X == Y.
+	 is_named_member(X, [_|YS]) :- is_named_member(X, YS).
 
-	name_dont_care(Eqs, X) :- is_named_member(X, Eqs).
-	name_dont_care(_, '_').
+	 name_dont_care(Eqs, X) :- is_named_member(X, Eqs).
+	 name_dont_care(_, '_').
 
-	tag_atoms(Eqs, X, var(X)) :- var(X), !, name_dont_care(Eqs, X).
-	tag_atoms(_, X, atom(X)) :- atomic(X), !.
-	tag_atoms(Eqs, P, compound(P2)) :- 
+	 tag_atoms(Eqs, X, var(X)) :- var(X), !, name_dont_care(Eqs, X).
+	 tag_atoms(_, X, atom(X)) :- atomic(X), !.
+	 tag_atoms(Eqs, P, compound(P2)) :- 
 		functor(P, _, _), P =.. [Nm|Args],
 		add_functor_args(This::tag_atoms, [Eqs], F),
 		maplist(F, Args, Args2),

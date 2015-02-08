@@ -88,7 +88,9 @@ class scope.
 
 	get_mod_conflict(Def, OtherDefs) :-
 		pred_cls(Def, A),
+		get_name(Def, Nm),
 		member(Def2, OtherDefs),
+		get_name(Def2, Nm),
 		pred_cls(Def2, B),
 		A::'Mods' \= B::'Mods'.
 	any_mod_conflict([]).
@@ -96,7 +98,7 @@ class scope.
 	any_mod_conflict([X|_]) :- 
 		get_name(X, Nm),
 		pred_to_cononical_name(Nm, CNm),
-		throw_atoms(['Predicate ', CNm , ' defined as both static and non static']).
+		throw_atoms(['Predicate ', CNm , ' defined with different access modifiers.']).
 
 	error_checks :- 
 		% Check we do not have any predicates with different modfifiers

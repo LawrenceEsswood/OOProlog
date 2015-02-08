@@ -13,7 +13,7 @@ copy_file_from_dir(Dir1, Dir2, Name) :- file(Dir1, Name, P1), file(Dir2, Name, P
 test_N_path(N, P) :- paths(test, Dir), atomic_list_concat([Dir, 'test', N, '.oopl'], P).
 build_N_path(N, P) :- paths(build, Dir), atomic_list_concat([Dir, 'test', N, '.out.pl'], P).
 standard_path('./standard/standard.oopl').
-standard_out_path(X) :- build_dir_path(BP), atom_concat(BP, 'standard.out.pl', X).
+standard_out_path(X) :- paths(build, BP), atom_concat(BP, 'standard.out.pl', X).
 
 load_compiler :-  file(build, 'generate.pl', G), [G].
 
