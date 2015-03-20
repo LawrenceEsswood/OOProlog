@@ -1,0 +1,49 @@
+split_tupples([],[],[]).
+split_tupples([(X,Y)|Z],[X|Xs],[Y|Ys]) :- split_tupples(Z, Xs, Ys).
+
+expand_predicate(This,(Name, Predicate), (Name, F)) :- F =.. [Predicate, This].
+
+build_class(Type, C) :- build_class(Type, C, []).
+
+build_class(Type, C, ExtraMembers) :-
+	C = class(Type, Members),
+
+	maplist(expand_predicate(C), Type::'Predicates', PrTup),
+	split_tupples(PrTup, K, V),
+	pairs_keys_values(Predicates, K, V),
+
+	pairs_keys_values(Fields, Type::'Fields', _),
+	append(Fields, Predicates, MembersLs),
+
+	split_tupples(ExtraMebers, EK, EV),
+	pairs_keys_values(Ex, EK, EV),
+	append(MembersLs, Ex, AllMembers),
+	
+	dict_pairs(Members, members, AllMembers).
+
+::(class(_,M), Nm, Res) :- Res = M.Nm.
+%Backwards compat
+::(C, Nm, Res, N) :- ::(C, Nm, Res).
+
+construct_classType(This, N, F, Pred, Par, Out, Cons) :- 
+	::(This, 'Name', N, 1),
+	::(This, 'Fields', F, 2),
+	::(This, 'Predicates', Pred, 3),
+	::(This, 'Parent', Par, 4), 
+	::(This, 'Outer', Out, 5),
+	::(This, 'Constructor', Cons, 6).
+
+class_def__classType(X) :- X = class(X, members(('Name', classType),('Fields', ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor']),('Predicates', []), ('Parent',none), ('Outer', none), ('Constructor',construct_classType))).
+
+/*
+class classType.
+	Name.
+	Fields.
+	Predicates.
+	Parent.
+	Outer.
+	Constructor.
+	classType(Name, Fields, Predicates, Parent, Outer, Constructor).
+
+endclass.
+*/
