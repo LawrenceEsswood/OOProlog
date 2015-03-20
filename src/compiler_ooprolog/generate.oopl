@@ -47,7 +47,7 @@ class scope.
 :- interpret.
 	').
 
-	% looks up a name to get its containing scope
+	% looks up a name to get its containing scope, FIXME wrong way round
 	lookup(Arg, ScopeRes) :- lookup_nesting(Arg, ScopeRes), !.
 	lookup(Arg, ScopeRes) :- lookup_parent(Arg, ScopeRes).
 

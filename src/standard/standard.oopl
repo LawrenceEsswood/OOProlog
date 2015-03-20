@@ -11,7 +11,6 @@ build_class(Type, C, ExtraMembers) :-
 	append(MembersLs, ExtraMembers, AllMembers),
 	Members =.. [members|AllMembers].
 
-
 ::(class(_,M), Nm, Res) :- arg(_, M, (Nm, Res)).
 ::(class(_,M), Nm, Res, N) :- arg(N, M, (Nm, Res)), !.
 % Failure can occur with multiple inheritance. N should be seen as a 'hint'.

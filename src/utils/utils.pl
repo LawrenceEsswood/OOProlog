@@ -56,6 +56,7 @@ add_escapes(X , Y) :- atom_chars(X, LX), add_escapes_list(LX, RX), atom_chars(Y 
 
 % Add qoutes to an atom if needed
 add_qoutes(X, X) :- number(X), !.
+add_qoutes([],[]) :- !.
 add_qoutes(X,Y) :- add_escapes(X, Z), atomic_list_concat(['\'', Z, '\''], Y).
 
 copy(File1,File2) :-

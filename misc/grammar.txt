@@ -1,28 +1,48 @@
 %Context free grammar for OO prolog%
 
-Program -> Defs eof
-		
-Defs 	-> Def Defs
-		-> e
-		
-Def 	-> Class
-		-> Clause
-		-> Field
-		
-Class -> Header .\n Defs endclass.\n
+Def		-> Field
+Def		-> Class
+
+Field	-> var
+
+Class 	-> Header .\n Defs endclass .\n
 
 Header 	-> class LowerCaseName
-		-> class LowerCaseName extends LowerCaseName
-	
-Clause 	-> Fact \n
-		-> Fact :- Atm Atms . \n
+		-> class LowerCaseName extends LowerCaseName	
 		
-Field	-> UpperCaseName
-Atms	-> , Atm Atms
-		-> e
+Program -> Defs eof
+
+Defs 	-> Def Defs
+		-> Epsilon
 		
-Atm		-> Atom(Atm Atms)
-		-> Atom
-		-> FX Atm
-		-> Atm XF
-		-> Atm XFX Atm
+Def		-> Clause
+		
+Clause 	-> Rule
+		-> Fact
+
+Rule -> Head :- Goal .\n
+
+Fact -> Head .\n		
+		
+Head 	-> Atom
+		-> Compound
+		-> epsilon
+		
+Goal	-> Atom
+		-> Compound
+		-> Goal, Goal
+		-> Goal; Goal
+		-> \+ Goal
+		-> !
+		
+Term 	-> atom
+		-> variable
+		-> Compound
+		
+Compound 	-> Functor ( ArgLst )
+			-> Term Infix Term
+			-> Prefix Term
+			-> Term Postfix
+
+ArgLst 		-> Term
+			-> Term, ArgLst
