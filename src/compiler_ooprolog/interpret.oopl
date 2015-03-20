@@ -1,0 +1,93 @@
+:- oopl_include('./compiler_ooprolog/generate.oopl').
+:- ['../src/utils/utils.pl'].
+
+call_list([]).
+call_list([X|Xs]) :- call(X), call_list(Xs).
+call_all(X) :- X =.. [',' | Xs], call_list(Xs).
+call_all(X) :- functor(X , Nm, _), Nm \= ',', call(X).
+
+interpret :- write('OOPL query interpeter.\n'),
+	defined_names(Names),
+	new(interpeter, I, Names),
+	call(I::'interpret').
+
+class dumped_scope.
+	Names.
+	Prefix.
+	dumped_scope(Names) :- Prefix = '_'.
+	lookup(Arg, This) :- member(Arg, Names).
+	is_top.
+	pred_is_constructor(_) :- fail.
+	pred_has_mod(_,_) :- fail.
+endclass.
+
+class interpeter extends generator.
+
+	Tag.
+	Scope.
+
+	next_tmp(_) :- !.
+
+	interpeter(Names) :- 
+		new(parser, Parser, _),
+		Opts = [no_qoutes],
+		Tag = Parser::'tag_atoms',
+		new(dumped_scope, Scope, Names).
+
+	attempt_goal(Res, Eqs) :- 
+		call_list(Res),
+		write('true.\n'),
+		pretty_write_list(user_output, 0, Eqs),
+		get_single_char(C),
+		C \= 59,
+		!.
+	attempt_goal(_, _) :- write('fail.\n').
+
+	error(Msg) :- write('OOPL runtime error!\n\n'),
+		write(user_output, Msg),
+		write('\n\n').
+
+	interpret :- 
+		add_functor_args(This::'error', [Msg], Er),
+		catch(This::'riwloop', Msg, Er),
+		interpret.
+
+	riwloop :-
+		write('?-'),
+		read_term(user_input, X, [variable_names(Eqs)]),
+		(call(Tag, Eqs, X, P) ; throw('Only currently allowing facts at runtime.\n')),
+		(resolve_args_comma_functor(P, Scope, [], _, Res) ; throw('Failed to interpret query')),
+		add_functor_args(This::attempt_goal, [Res, Eqs], G),
+		add_functor_args(This::error, [Msg], Er),
+		catch(G, Msg, Er),
+	 	riwloop.
+
+	pretty_write_list(_, _, []) :- !.
+	pretty_write_list(Strm, Lvl, [V|Vs]) :- pretty_write(Strm, Lvl, V), !, pretty_write_list(Strm, Lvl, Vs).
+
+	eqv(Dict, Key, =(Key, V)) :- V = Dict.Key.
+
+	pretty_write(Strm, Lvl, =(K, V)) :- var(V), !, write_tabs(Strm, Lvl), write(Strm, =(K, V)), write(Strm, '.\n').
+	 	
+	pretty_write(Strm, Lvl, =(V, class(T, M))) :- !, write_tabs(Strm, Lvl), 
+	 		write(V),
+	 		write(' = '),
+	 		write(Strm, 'instance of '),
+	 		write(Strm, T::'Name'),
+	 		write(Strm, '.\n'),
+	 		Lvl2 is Lvl + 1,
+	 		write_tabs(Strm, Lvl2, '|'),
+	 		write(Strm, '\n'),
+	 		add_functor_args(This::eqv, [M], EQV),
+	 		maplist(EQV, T::'Fields', Vs),
+	 		pretty_write_list(Strm, Lvl2, Vs).
+
+	pretty_write(Strm, Lvl, X) :- write_tabs(Strm, Lvl), write(Strm, X), write('.\n').
+
+	write_tabs(S, N) :- write_tabs(S, N, '|-').
+
+	write_tabs(_, 0, _).
+	write_tabs(Strm, 1, E) :- write(Strm, '	'), write(E).
+	write_tabs(Strm, N, E) :- N > 1, write(Strm, '	|'), Nd is N - 1, write_tabs(Strm, Nd, E).
+
+endclass.
