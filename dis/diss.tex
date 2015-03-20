@@ -1,0 +1,765 @@
+% Template for a Computer Science Tripos Part II project dissertation
+\documentclass[12pt,a4paper,twoside,openright]{report}
+\usepackage[pdfborder={0 0 0}]{hyperref}    % turns references into hyperlinks
+\usepackage[margin=25mm]{geometry}  % adjusts page layout
+\usepackage{graphicx}  % allows inclusion of PDF, PNG and JPG images
+\usepackage{verbatim}
+\usepackage{docmute}   % only needed to allow inclusion of proposal.tex
+\usepackage{syntax}
+\usepackage{listings}
+\usepackage{bussproofs}
+\usepackage{tikz}
+\usetikzlibrary{matrix}
+
+ % use text width & text height instead of minimum size, as that causes
+% alignment issues, and since blocks require uniform sizes
+\tikzstyle{tblock} = [matrix of nodes,ampersand replacement=\&,nodes={
+    outer sep=0pt,text width=3em,inner ysep=1em,text centered
+}]
+
+% \tblock {input} {output} {machine}
+\newcommand{\tblocktext}[3]{
+    {#1} \& $\to$   \& {#2} \\
+    {}     \&  {#3}   \&      \\
+}
+
+\newcommand{\tblockoutline}[1]{
+    \draw (#1-1-1.south west) |- (#1-1-3.north east) |- (#1-1-3.south west) |- (#1-2-2.south west) |- (#1-1-1.south west);
+}
+
+\tikzstyle{wblock} = [matrix of nodes,ampersand replacement=\&,nodes={
+    outer sep=0pt,text width=3em,inner ysep=1em,text centered
+}]
+
+\newcommand{\wblocktext}[1]{
+    {#1} \\
+    {}\\
+}
+
+\newcommand{\wblockoutline}[1]{
+    \draw (#1-1-1.south west) |- (#1-1-1.north east) -- (#1-1-1.south east) -- (#1-2-1.south) -- (#1-1-1.south west);
+}
+
+\tikzstyle{vblock} = [matrix of nodes,ampersand replacement=\&,nodes={
+    outer sep=0pt,text width=3em,inner ysep=1em,text centered
+}]
+
+% \vblock {supports} {depends}
+\newcommand{\vblocktext}[2]{
+    	{#1} 	\\
+      			\\
+	{#2}	\\
+}
+
+\newcommand{\vblockoutline}[1]{
+	\draw (#1-1-1.north west) |- (#1-3-1.south east) |-  (#1-1-1.north west);
+}
+
+\tikzstyle{pblock} = [matrix of nodes,ampersand replacement=\&,nodes={
+    outer sep=0pt,text width=3em,inner ysep=1em,text centered
+}]
+
+% \vblock {name} {language}
+\newcommand{\pblocktext}[2]{
+    	{#1} 	\\
+	{#2}	\\
+}
+
+\newcommand{\pblockoutline}[1]{
+	\draw (#1-1-1.north west) arc [radius=0.55, start angle=90, end angle = 270];
+	\draw (#1-1-1.south east) arc [radius=0.55, start angle=270, end angle = 450];
+	\draw (#1-1-1.north west) -- (#1-1-1.north east);
+	\draw (#1-1-1.south east) |- (#1-2-1.south west)  |-  (#1-2-1.north west);
+}
+
+\newcommand{\wsupt}[2]{
+	\node(mac#2) at (#2-2-2.south west) [wblock, anchor = mac#2-1-1.north west] {\wblocktext{#1}};
+	\wblockoutline{mac#2};
+}
+
+\raggedbottom                           % try to avoid widows and orphans
+\sloppy
+\clubpenalty1000%
+\widowpenalty1000%
+
+\renewcommand{\baselinestretch}{1.1}    % adjust line spacing to make
+                                        % more readable
+
+\begin{document}
+\EnableBpAbbreviations
+\makeatletter \renewcommand{\@cite}[1]{\textsuperscript{\,[#1]}} \makeatother
+
+\bibliographystyle{plain}
+
+\begin{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Title
+
+
+\pagestyle{empty}
+
+\rightline{\LARGE \textbf{Lawrence Esswood}}
+
+\vspace*{60mm}
+\begin{center}
+\Huge
+\textbf{Object Oriented Prolog Compiler} \\[5mm]
+Computer Science Tripos -- Part II \\[5mm]
+Churchill College \\[5mm]
+\today  % today's date
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Proforma, table of contents and list of figures
+%/
+
+
+\pagestyle{plain}
+
+\chapter*{Proforma}
+
+{\large
+\begin{tabular}{ll}
+Name:               & \bf Lawrence Esswood                       \\
+College:            & \bf Churchill College                     \\
+Project Title:      & \bf Object Oriented Prolog Compiler \\
+Examination:        & \bf Computer Science Tripos -- Part II, July 2015  \\
+Word Count:         & \bf SOMENUMBER \\
+Project Originator: & Lawrence Esswood                    \\
+Supervisor:         & Dr Alan Mycroft                    \\ 
+\end{tabular}
+}
+\footnotetext[1]{This word count was computed
+by \texttt{detex diss.tex | tr -cd '0-9A-Za-z $\tt\backslash$n' | wc -w}
+}
+\stepcounter{footnote}
+
+
+\section*{Original Aims of the Project}
+
+TODO
+
+\section*{Work Completed}
+
+TODO
+
+\section*{Special Difficulties}
+
+TODO
+ 
+\newpage
+\section*{Declaration}
+
+I, Lawrence Esswood of Churchill College, being a candidate for Part II of the Computer
+Science Tripos, hereby declare that this dissertation and the work described in it are my own work,
+unaided except as may be specified below, and that the dissertation
+does not contain material that has already been used to any substantial
+extent for a comparable purpose.
+
+\bigskip
+\leftline{Signed [signature]}
+
+\medskip
+\leftline{Date [date]}
+
+\tableofcontents
+
+\listoffigures
+
+\newpage
+\section*{Acknowledgements}
+
+TODO
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% now for the chapters
+\end{comment}
+
+\pagestyle{headings}
+
+\chapter{Introduction}
+
+\section{Background and Motivation}
+
+The aim of modern programing languages is to provide programmers with powerful abstractions that allow complicated algorithms and structures to be implemented with maximum efficiency and minimal errors. Compilers provide the mechanism for translating between languages and are a necessity to bridge the gap between the high-level languages used by programmers and the languages our machines are designed to run. Furthermore, compilers can perform transformations that, while retaining semantic behavior, produce smaller, more efficient, or otherwise more desirable output. As such compilers continue to be a large, active area of research.
+
+\bigskip
+
+Prolog is a declarative language based on first-order logic. It has proven a very powerful language for certain applications such as artificial intelligence\cite{AIBOOK} and natural language programming\cite{NLPBOOK}. However it is missing many features that are necessary for programming in the large. Modules in Prolog go some way to providing these features, but fall short in some aspects. For example, there is no way of providing information-hiding, polymorphism or inheritance using modules.
+
+\bigskip
+
+Object Oriented Programing (OOP) is a paradigm that can be found in many, mostly procedural, languages. Objects combine state and method and are a good way of separating interface and implementation. They can provide an effective way of building larger, more robust systems. Because of this objects could prove a useful addition to the Prolog language. A practical way of exploring the use of objects in Prolog is to construct a compiler for a modified version of language.
+
+\section{Work Undertaken}
+
+A new language Object Oriented Prolog (OOPL) was designed with a view to introducing class-based object-oriented programing to Prolog while keeping as much of the semantics the same as possible. A bootstrapping compiler was written in its own language, targeting Prolog as a back end. The bootstrapping was facilitated using a basic version of the compiler written in Prolog, see more in the implementation section.
+
+\subsection {OOPL Example}
+
+\begin{lstlisting}
+% A class representing a 2D vector. %
+class vector. 
+	X. Y. % Fields.
+	vector(X, Y). % Constructor. %
+	
+	 % A sum predicate. %
+	sum(V2, V3) :- 
+		X3 is X + V2::'X',
+		Y3 is Y + V2::'Y',
+		new(vector, V3, X3, Y3).
+		
+	% A magnitude predicate. %
+	magnitude(Mod) :- Mod is sqrt((X * X) + (Y * Y)). 
+endclass.
+\end{lstlisting}
+
+\section{Related Work}
+
+Extending existing languages with Object-Oriented features is nothing new, in fact one of the most historically popular languages C++ was first envisioned as a `C with Classes'\cite{CPP}. There have also been several previous successful attempts to extend the Prolog language with object oriented-concepts.
+
+\bigskip
+
+SCOOP\cite{SCOOP}  takes the same approach of class-based inheritance as OOPL. SCOOP takes its insipritation for OOP from Simula67 and uses very conventional OOP syntax and behaviour for global behaviour and also uses unification and backtracking for local behaviour. Rather than explictly providing fields, assert and retract predicates are used to provide state.
+
+\bigskip
+
+Logtalk\cite{LOGTALK} provides a more fleshed out implementation, providing both class-based and prototype-based systems, multiple inheritance. It also uses assert and retract statements to provide mutable state to objects. 
+
+\bigskip
+
+My implementation takes a different approach to providing state by way of explicit fields, which are similar to variables in that they can be used for pattern matching and unification is used for instantiation. This maintains the behavior of Prolog while still providing a syntactic method for declaring state other than predicates. Also the mechanism for inheritance differs from most OOP languages to make objects behave more like the Prolog language, more detail is given in preparation chapter. The motivation to taking this direction was to merge OOP concepts with Prolog, rather than create an extension that operates in a different manner.
+
+\chapter{Preparation}
+
+This section covers the planning sections of the project and the development methods used. It also provides some background on the topics relevant to the project such as the Prolog language and bootstrapping.
+
+\section{Starting Point}
+
+While studying the tripos course I have been introduced to both object-oriented programing and basic Prolog programing. Furthermore I have taken two compilers courses and undertaken some summer reading on compilers, namely `Aho, Sethi, Ullman'\cite{DRAGON}.
+
+\section {Language Design}
+
+Although the focus of the project was the creation of the compiler the choice was made to design a unique extension to the language rather than copy existing implementations such as SCOOP, SICStus and Logtalk. This choice was made as it was interesting to explore different options and design decisions and compare results. The choice was made to provide class-based as opposed to prototype-based objects as it leave the way open for better static analysis. The OOPL language is an extension to Prolog, as such every Prolog program is still valid in OOPL. Below a simple introduction to the syntax and semantics of Prolog is given, and the extensions that have been added to create OOPL.
+
+\subsection {Syntax}
+
+The abstract syntax of a language is most readily described as a context free-grammar. A dot character followed by any whitespace character is used to end a clause, it is just written as a `.' below. Provided below is a context free-grammar for Prolog. It should be noted that prolog has a very simple syntax.
+
+\begin{grammar}
+
+<program> ::= <def>*
+		
+<def> ::= <clause>
+		
+<clause> ::= <head> `:-' <body> `.'
+		
+<head> 	::= <pred> `(' <term>* `)'
+		
+<body> ::= <head>*
+
+<query> ::= `?-' <body>
+
+\end{grammar}		
+
+A Prolog program consists of number of clauses. We normally split these into two categories, a clause with an empty body is a \emph{fact}, otherwise we call it \emph{rule}. We normally emit writing the `:-' for facts. A query is used to begin execution of a Prolog program, execution is covered in the semantics section.
+
+\begin{grammar}	
+				
+<term> ::= <variable>
+\alt <functor> `(' <term>* `)'
+
+\end{grammar}
+
+Prolog has 3 types of term,  $<$term$>$ in the abstract syntax. Atoms are a particular form of ground term, they are alphanumeric and must either start with a lower case letter or be quoted. A Compound is composed of an atom called a \emph{functor} and a number of arguments which are again terms. The number of arguments is known as the compounds \emph{arity}. Atoms are treated as compounds of arity zero, and hence are not mentioned separately. Variables, $<$variable$>$, are placeholders for arbitrary terms, they are also alphanumeric and must start with either a capital letter or underscore.
+
+\bigskip
+
+To introduce the additional syntax of OOPL we have all of the productions above as well as the following:
+
+\begin{grammar}
+<def> ::= <field>
+\alt <class>
+\end{grammar}
+
+We add two more definitions for the programmer to use, a field or a class. These can appear anywhere a clause would, although the language will reject fields outside of a class.
+
+\begin{grammar}
+<field> ::= <variable> `.'
+\end{grammar}
+
+Fields are named the same way as variables, they must start with a capital letter or underscore.
+
+\begin{grammar}
+<class> ::= <header> `.' <def>* `endclass' `.'
+
+<header> ::= `class' <atom>
+\alt `class' <atom> `extends' <atom>*
+\end{grammar}
+
+Classes are named in the same way as atoms and can optionally extend some number of classes. The body of the class can consist of any number of definitions including fields, predicates and other classes. 
+
+\begin{grammar}
+<functor> ::= `new'
+
+<infix> ::= `::'
+\end{grammar}
+
+We introduce a functor called \emph{new} and a macro \emph{::} that is written infix. The first is used to construct objects, the second to access their members. The detailed semantics of these two operators are discussed below.
+
+\subsection {Semantics}
+
+Provided here is an informal introduction to the semantics of Prolog as well as the new features added and how they change the semantics.
+
+\subsubsection {Prolog}
+
+A Prolog program, \emph{P}, is a number of Horn clauses ( $<$clause$>$ in the syntax), a subset of first-order predicate logic. The clauses define a set of axioms within a closed universe. A clause of the form $a$ :- $b_1, b_2, ..., b_n$ should be seen as the logical implication $a \leftarrow b_1 \land b_2 \land ... \land b_n$. 
+
+\bigskip
+
+Unification of terms is a very important concept in Prolog as execution is performed by attempting unification of terms and backtracking. The rules for unification are as follows:
+
+\begin{itemize}
+	\item A Variable unifies with any other term\footnote{If the occurs check is turned on, unification will fail if the variable appears as a subterm in the term you attempt you unify with.}.
+ 	\item A Compound unifies with another Compound if and only if they have the same functor, arity, and their arguments can be pairwise recursively unified.
+\end{itemize}
+
+We will define a function, MGU(X, Y), which returns the most general unifier of terms X and Y, or fails if they do not unify.
+
+\bigskip
+
+Users start the execution of a program by submitting a single goal, known as a query, which is of the form ?-q $ = (q_1 \land ... \land q_n)$. Prolog attempts to find some way to satisfy the query, returning the substitutions it makes as a result, otherwise it fails. The strategy Prolog employs is called SLD resolution and works on the premise of attempting to refute the negation of the query. A depth-first left-right search over the axioms of the program is the strategy employed by most Prolog interpreters for efficiency reasons. This is only weakly complete, that is if it terminates then it is complete, but non-termination may occur even when a refutation exists. From this we can infer the following operational semantics based on those given by Mycroft and Jones\cite{MYCROFT}.
+
+\bigskip
+
+We use a stack not to record function calls but to keep track of state so that we can backtrack if necessary. Each element on the stack is formed of a 3-tuple. The first is a conjunction of as-yet-unsatisfied goals, the second is the total of the substitutions performed so far, and the third is the remaining clauses. We start with a stack with a single element containing the list of goals that is the query, \emph{g}, the identify substitution, \emph{ID}, and the entire program, \emph{P}, as the set of available clauses to apply. The Start State:
+
+\bigskip
+
+StartState = (q, ID, P) : []
+
+\bigskip
+
+I have used colon for cons, to avoid confusion with the :: operator defined later. The `@' symbol is used below to refer to list append, and `[]' is the empty list. The transition relation, \emph{$\to$} between states is described below:
+
+\begin{prooftree}
+\AXC{}
+\RightLabel{where $\theta$ = MGU(a, a')}
+\LeftLabel{(apply clause)}
+\UIC{(a : b, $\phi$, (a' $\leftarrow$ b')\footnotemark : C) : stack $\to$ }
+	\noLine
+\UIC{($\theta$(b') @ $\theta$(b), $\theta\circ\phi$, P) :  (a : b,  $\phi$, C) : stack}
+\end{prooftree}
+This is the case where the current clause under consideration unifies with the left-most goal. We pop off the top element on the stack and replace it with two more: a backtracking point for later and an element where the clause was applied.
+\footnotetext{This is a clause with all variables renamed to be fresh}
+\begin{prooftree}
+\AXC{}
+\RightLabel{where MGU(a, a') fails}
+\LeftLabel{(clause does not unify)}
+\UIC{(a : b, $\phi$, (a' $\leftarrow$ b') : C) : stack $\to$}
+\noLine
+\UIC{(a : b, $\phi$, C) : stack}
+\end{prooftree}
+If we cannot apply the current clause we remove it from the list and continue on.
+\begin{prooftree}
+\AXC{}
+\LeftLabel{(backtrack)}
+\UIC{(g, $\phi$, []) :: stack $\to$ stack}
+\end{prooftree}
+If there are no more clauses left to try we backtrack by popping an element off the stack.
+\begin{prooftree}
+\AXC{}
+\LeftLabel{(fail)}
+\UIC{[] $\to$ fail}
+\end{prooftree}
+If we reach the bottom of the stack then there are no more ways to satisfy the query, and we fail.
+\begin{prooftree}
+\AXC{}
+\LeftLabel{(output)}
+\UIC{([],  $\phi$, C) : stack $\to$ true,  $\phi$}
+\end{prooftree}	
+If ever reach a state no goals remaining, we have found a solution. We output the final substitutions that apply to the original variables in the query as the result. At this point we can also forcibly backtrack, finding all the remaining (potentially infinite in number) solutions. 
+
+\bigskip
+
+There is also a special operator `!' in Prolog called a cut. When Prolog encounters a cut within the body of a clause, it will limit backtracking so that none of the goals within the body, nor the head of the clause, can be retried. A more formal description can be found in \cite{MYCROFT}.
+
+\bigskip
+
+These semantics were extended to add classes. The details of each new feature is given below.
+
+\subsubsection {Objects}
+
+Objects are a new type of Prolog term, distinct from atoms, compounds, and variables. They are always instances of a particular class created using the \emph{new} syntax (see later). To update the semantics, we change the MGU function above such that we also include the following rules for unification:
+
+\begin{itemize}
+	\item A Variable and an Object can always be unified.
+	\item An Object and an Object can be unified if and only if they are instances of the same class and each of their fields can be recursively unified\footnote{In most OOP languages (e.g. Java) objects have identity. This is not true in OOPL due to the way we unify objects.}.
+	\item An Object cannot be unified with a compound.
+\end{itemize}
+
+\subsubsection {Classes}
+
+A class gives a description of an object and lists the fields an object will have as well as the concrete implementation of its member predicates. Within the class any predicate with the same name as the class is given special meaning as a \emph{Constructor}. Constructors cannot be used as goals directly, doing so will produce a compile time error. Instead constructors are implicit goals when the \emph{new} predicate is applied, see below.
+
+\bigskip
+
+Every predicate within a class can use an implicit variable called \emph{This}. \emph{This} will always be bound at run time to the instance of a class from which the predicate was accessed. For example take the following snippet.
+
+\begin{lstlisting}
+class a.
+	foo :- write(This). % A simple member predicate
+endclass.
+
+bar :- new(a, Ob), % Constructs a new a, binds it to Ob
+	call(Ob::'foo'). % Accesses and invokes foo
+\end{lstlisting}
+
+Invoking the \emph{bar} predicate calls\footnote{The inbuilt \emph{call} predicate in Prolog takes a compound and attempts to satisfy it as a goal} \emph{foo}. Within the call to \emph{foo} the \emph{This} variable is unified with \emph{Ob}.
+
+\bigskip
+
+Notice in the above example an atom \emph{a} was used to refer to the class when using `new'. At any scope where the class's definition is visible using an atom with the same name as the class will instead give a value representing the class. Classes are first-class citizens in OOPL and are represented by an object at runtime of class classType\footnote{In a similar way to Java in which we can use reflection to get an object of type `Class'.}. It would have therefore been legal to have written ``X = a, new(X, Ob)'' and the same result should be expected.
+
+\subsubsection {Inheritance}
+
+Inheritance allows a child class to inherit all the fields and predicates of a parent class. In most object-oriented languages redefining a virtual method (the equivalent of a predicate in OOPL) in a child that is also present in the parent class will \emph{override} behavior. Selecting which method to use at runtime is known as dynamic dispatch. In OOPL all predicates within classes are by default virtual, however with one crucial difference in that if a predicate fails in the child, the parent's version is tried. This keeps the semantics more in line with how Prolog would normally handle multiple predicates of the same name, \emph{overriding adds to behavior}. In the case of multiple inheritance we again try all implementations of the predicate, trying them in the order the parent classes were listed. If the programmer truly wishes to override its parents completely, a cut can be used.
+
+\subsubsection {Scope}
+
+The \emph{Scope} of some named thing refers to the places in a program from which it can be referred to. Scopes are nested in a tree-like structure. The top-level scope contains all the predicates not within a class. Each class creates a new scope, and is enclosed by the scope in which it was defined (either the top scope, or another class's scope in the case of inner classes).
+
+\bigskip
+
+Defining a predicate with the same name as in another scope shadows the outer predicate. If a class extends another all the fields and predicates it inherits are considered to be in the current scope. When we look up a name to see what it resolves to we first check the current scope, then any enclosing scope and so on. We take the first match as the resolved name. For example consider the following code fragment:
+
+\begin{lstlisting}
+foo. % Top level predicate
+
+class a.
+	foo. % Member predicate of the same name
+endclass.
+
+class b.
+	foo. % Member predicate of the same name
+	class c extends a.
+	endclass.
+	class d.
+	endclass.
+endclass.
+
+class e.
+endclass.
+
+\end{lstlisting}
+
+
+\noindent Using the atom foo in different places will have the following meaning
+
+\begin{center}
+\begin{tabular}{c|c}
+Place Used & `foo' refers to \\
+\hline
+top & top \\
+a & a \\
+b & b \\
+c & a \\
+d & b \\
+e & top \\
+\end{tabular}
+\end{center}
+
+Every scope that defines the \emph{foo} predicate simply uses its own verion (i.e. top, a and b). Class c uses the version from a as it is a child class of a. Classes d and e use the version defined in their enclosing scope. In this way we do not have to worry about reusing names of predicates, a class can contain a predicate that is a duplicate and have it completely hidden outside of the class's scope.
+
+\subsubsection {New}
+
+The \emph{new/n} variable-length predicate is used to create a new instance of object. It is a relation between a class, an instance, and a number of terms to provided to the constructor. Classes are represented at runtime as objects of class `classType'. If Cl is some runtime representation of a class, with a constructor called `con' then the goal ``new(Cl, Ob, $T_1$, ..., $T_n$)'' succeeds if and only if Ob can be unified with a new, empty, instance of Cl and the goal ``con($T_1$, ..., $T_n$)'' within Ob succeeds. new/n will attempt unification via backtracking for every constructor of the class with the correct arity (any unification/construction that occurs will be undone upon backtracking).
+
+\bigskip
+
+Let \emph{Instance} be a mathematical function that takes a class as an argument and returns an object that is an instance of that class that is renamed apart\footnote{A clause/object is \emph{renamed apart} iif its variables, including fields, do not occur elsewhere}. In terms of the operational semantics of Prolog given above, we now have an additional case where the left most goal is the \emph{new} predicate.
+
+\begin{prooftree}
+\AXC{}
+\RightLabel{where $\theta$ = MGU(Ob, Instance(Cl))}
+\LeftLabel{(new)}
+\UIC{(new(Cl, Ob, $T_1, ..., T_n$ )) : b, $\phi$, C) : stack $\to$ }
+	\noLine
+\UIC{($\theta$(access(Cl, `Constructor', con)) : $\theta$(con(Ob, $T_1, ..., T_n$ )) : $\theta$b, $\theta\circ\phi$, P) : stack}
+\end{prooftree}
+
+Semantics of the access/3 predicate are discussed below. 
+
+\subsubsection {Fields}
+
+In OOPL fields defined within a class act like variables. They are visible to any predicate within the class. If any predicate unifies the variable the substitution is visible from any other predicate in scope, and if backtracking occurs the unification is undone in the same way.
+
+\bigskip
+
+In this way objects in OOPL are mutable in that we can unify variables with other Terms, but only insofar as normal Prolog variables can be substituted for other terms. 
+
+\subsubsection{Accessing Fields}
+
+Sometimes the programmer may want to inspect the internal state of an object. In line with Prolog defining a knowledge base in terms of relations, accessing a member of a class is a relation between the instance of the class, the name of the fields, and its value. Let this relation be a predicate called access/3 such that the goal ``access(Object,Field,Value)'' is satisfiable only when `Object' is an object with a field called `Field' with value `Value'.
+
+\bigskip
+
+We can provide unbound variables to both Field and Value (although currently Object must be bound) and OOPL will attempt to unify them with any matching field-value pair, successively trying all combinations until it fails. 
+
+\bigskip
+Although this is the underlying mechanism for accessing a member of a class, it was considered too verbose. e.g. consider accessing a deeply nested value like so: 
+\begin{lstlisting}
+access(V1,F1,V2), access(V2, F2, V3), access(V3, F3, Res).
+\end{lstlisting}
+To avoid this OOPL provides the `::' infix operator. X::Y is a syntactic term which is automatically evaluated such that access(X, Y, X::Y) holds true. The example given above can now be written as:
+\begin{lstlisting}
+Res = V1::F1::F2::F3.
+\end{lstlisting}
+
+\bigskip
+
+This makes the semantics of goals that contain a term with the :: operator different from most operators in Prolog. A parallel might be drawn with using arithmetic operators. The term 1+1 is not the same as the term 2, and if the user wishes to evaluate a term the \emph{is} operator must be used. With the :: operator however terms are automatically evaluated, even if deeply nested within compound structures. This was motivated by a desire to reduce the quantity of required syntax to use the OOP features provided by OOPL. Using the [X/Y] notation to denote the substitution function of `X for Y', and A $\in$ B to mean that the syntactic term A appears somewhere within compound term B we add one further rule:
+
+\begin{prooftree}
+\AXC{}
+\RightLabel{where X::Y $\in$ a}
+\LeftLabel{(access)}
+\UIC{(a : b, $\phi$, C) : stack $\to$ }
+	\noLine
+\UIC{(access(X, Y, Z) : [Z/X::Y]a : [Z/X::Y]b, [Z/X::Y]$\circ\phi$, P) : stack}
+\end{prooftree}
+
+\subsubsection{Accessing Member Predicates}
+
+OOPL does not distinguish between accessing fields and accessing member predicates, and the exact same `::' syntax is used for both. The name by which to access a predicate is the atomic name of the predicate. The result of accessing a member predicate from an object is a term that can be used with the Prolog call predicate. As previously mentioned when invoked the `This' variable is dynamically bound to the instance from which the the predicate was accessed. Therefore the result of accessing a predicate from an object can be viewed as returning a closure of the predicate with the object.
+
+\section{Tombstone Diagrams}
+	Tombstone diagrams offer an intuitive way of describing compilers, especially when considering bootstrapping. They were first described by McKeenman in `A Compiler Generator'\cite{TOMB}. As they are used throughout this document a quick description is given here.
+
+\bigskip
+
+Tombstone diagrams are made up from a number of building blocks. Examples of each tombstone block:
+
+\bigskip
+
+\begin{tikzpicture}
+    %\node(right) at (mid-1-3.north west) [tblock,anchor=right-1-1.south west] {\tblocktext{C}{M}{M}};
+
+	\node(compiler) [tblock] {\tblocktext{A}{B}{C}};
+	\tblockoutline{compiler};
+    	
+    	\node(translate) at (4,0) [vblock] {\vblocktext{D}{E}};
+    	\vblockoutline{translate};
+    	
+    	\node(prog) at (8,0) [pblock] {\pblocktext{P}{L}};
+    	\pblockoutline{prog};
+    	
+    	\node(bottom) at (12,0) [wblock] {\wblocktext{M}};
+    	\wblockoutline{bottom};
+    	
+\end{tikzpicture}
+
+From left to right:
+
+ \begin{itemize}
+ 	\item A compiler that translates from language A to language B, written in language C.
+ 	\item An interpreter that runs language D, implemented in language E.
+ 	\item A program P, typically not a compiler, written in language L.
+ 	\item A machine that can natively run language M.
+\end{itemize}
+
+A diagram is built by connecting pieces together with matching languages. To represent running a program, we place one block on top of the other. To represent translating a program, we place the source program to the left of the compiler block, and the target to the right. A correct diagram should have its foundations machines and have all connections match languages.
+
+ \bigskip
+ 
+An example using all the blocks that shows how we might compile a Java program to ByteCode and then interpret this, all on an x86 machine:
+
+\begin{center}
+\begin{tikzpicture}
+	\node(compiler) [tblock] {\tblocktext{Java}{Byte-Code}{x86}};
+	\tblockoutline{compiler};
+	
+	\node(prog1) at (compiler-1-1.north west) [pblock, anchor = prog1-2-1.north east] {\pblocktext{P}{Java}};
+	\pblockoutline{prog1};
+	
+	\node(prog2) at (compiler-1-3.north east) [pblock, anchor = prog2-2-1.north west] {\pblocktext{P}{Byte-Code}};
+	\pblockoutline{prog2};
+	
+	\wsupt{x86}{compiler};
+	
+	\node(inter) at (prog2-2-1.south west) [vblock, anchor = inter-1-1.north west] {\vblocktext{Byte-Code}{x86}};
+	\vblockoutline{inter};
+	
+	\node(mac2) at (inter-3-1.south west) [wblock, anchor = mac2-1-1.north west] {\wblocktext{x86}};
+	\wblockoutline{mac2};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Bootstrapping A Compiler}
+	
+A neat way of producing a compiler is to write it in its own language. For example our compiler for OOPL that targets prolog looks like this:
+
+\begin{center}
+\begin{tikzpicture}
+	\node(compiler) [tblock] {\tblocktext{OOPL}{Prolog}{OOPL}};
+	\tblockoutline{compiler};
+\end{tikzpicture}
+\end{center}
+
+This is particularly good as we do not have to rely on any other languages and can continuously upgrade and use new features as they appear. This poses the problem however of how to first run the compiler on itself. The answer is to use another compiler to start the process, and then run the result on itself again and again until we reach a fixed point which is independent of the compiler we used to start the process.
+
+ \bigskip
+ 
+For example, using an OOPL to Prolog compiler written in Prolog to bootstrap the above compiler, then running it on itself:
+
+\begin{center}
+\begin{tikzpicture}
+	\node(compiler1) [tblock] {\tblocktext{OOPL}{Prolog}{Prolog}};
+	\tblockoutline{compiler1};
+	
+	\node(compiler2) at (compiler1-1-1.north west) [tblock, anchor = compiler2-2-2.north east] {\tblocktext{OOPL}{Prolog}{OOPL}};
+	\tblockoutline{compiler2};
+	
+	\node(compiler3) at (compiler1-1-3.north east) [tblock, anchor = compiler3-2-2.north west] {\tblocktext{OOPL}{Prolog}{Prolog}};
+	\tblockoutline{compiler3};
+	
+	\node(compiler4) at (compiler3-1-1.north west) [tblock, anchor = compiler4-2-2.north east] {\tblocktext{OOPL}{Prolog}{OOPL}};
+	\tblockoutline{compiler4};
+	
+	\node(compiler5) at (compiler3-1-3.north east) [tblock, anchor = compiler5-2-2.north west] {\tblocktext{OOPL}{Prolog}{Prolog}};
+	\tblockoutline{compiler5};
+	
+	\wsupt{Prolog}{compiler1};
+	\wsupt{Prolog}{compiler3};
+\end{tikzpicture}
+\end{center}
+
+Gives us a compiler that should be the same as if we had somehow been able to run our compiler on itself using a machine natively able to run OOPL. It is however possible to reach a fixed point but a still get an incorrect version of the compiler, whether by a bug in the first compiler or malicious insertion of a compiler back-door that propagated down the chain of compilers. This attack was first reported in an air-force critique\cite{MULTICS} and later popularized by Ken Thompson in his Turing Award acceptance speech\cite{KEN}. Therefore it should be obvious that the correctness of the compiler depends not only on the final source code, but intermediate outputs which are harder to analyse. This factored into the reasoning for testing the compiler with a corpus of small programs.
+
+\section{Requirements Analysis}
+
+In order to keep the project on schedule while maintaining opportunities for adding more features if the project moved faster than planned the MOSCOW method was employed. The following table illustrates planned features and categorizes them as a (M)ust have, (S)hould have, (C)ould have or (W)ould have.
+
+\subsubsection{Must}
+
+\begin{itemize}
+	\item Handle the definition of classes and also resolve references to the class within predicates.
+	\item Handle the definition of predicates (including constructor predicates) within classes and be able to correctly resolve which predicate to use with scoping rules.
+	\item Allow fields within classes and pattern match with them.
+	\item Allow optional single inheritance of both fields and predicates in a manner specified in the semantics section.
+	\item Support the `::' syntax for member access to return both fields and predicates of a class.
+	\item Support the `new' predicate to construct a class and call its constructor.
+\end{itemize}
+
+
+\subsubsection{Should}
+\begin{itemize}
+	\item Provide compile-time error and warning messages, e.g. trying to inherit from a class that does not exist.
+	\item Allow access modifiers such as `Public' and `Private' that restrict access to class members.
+	\item Allow static fields and predicates that are shared between instances of a class.
+\end{itemize}
+
+\subsubsection{Could}
+\begin{itemize}
+	\item Allow classes to inherit from multiple parents.
+	\item Optimise dynamic binding using a hash table.
+\end{itemize}
+
+\subsubsection{Would}
+\begin{itemize}
+	\item Allow functional style methods in classes.
+	\item Perform compiler-time type checking to provide further optimisations.
+\end{itemize}
+
+\section{Development Process}
+
+Before any work was undertaken it was important to choose a set of development tools and development methodologies to avoid potential problems further down the road. The software used to develop and maintain the project is given below, as well as the techniques used for development.
+
+\subsection{Choice of software}
+
+A number of suitable software tools were employed to make efficient use of time during development. Sublime Text was used as an editor. A GIT repository was maintained to provide source control and the repository was backed up using GitHub. The build scripts responsible for bootstrapping the compiler were written in prolog, and the entire project used SWIPL as both an interpreter for the back-end Prolog and as a debugging environment.
+
+\bigskip
+
+The revision control provided by GIT was particularly important for managing the development of the bootstrapping compiler as safe checkpoints were needed at each stage. Without this an accident during development may have lead to a correctly written final compiler but no way of compiling it as one bootstrapping stages in the middle was lost.
+
+\bigskip
+
+It was not necessary to find any libraries to support the project as the Prolog standard includes a large number of very powerful predicates to provide most functionality required, including lexing and parsing.
+
+\subsection{Software techniques}
+
+An Incremental Development methodology was employed during development. This made a large amount of sense due to the nature of bootstrapping. In order to add new features a working version of the compiler was required to be created and tested at each iteration of development. Furthermore some prototyping was applied in that an initial version of the compiler had to be designed in a different language to start the bootstrapping process.
+
+\bigskip
+
+During the testing stages of the project a number of units tests were created in Prolog to both test new features and to guard against regression. 
+
+\section {Summary}
+
+An outline of Prolog and an extension for it, OOPL, has been given. OOPL adds the ability to define, construct, and manipulate objects in a Prolog setting. Furthermore, the process of bootstrapping a compiler has been outlined. In the next section the implementation of the bootstrapping compiler for OOPL is discussed.
+
+\chapter{Implementation}
+
+TODO 5000
+
+This chapter covers the details of the work undertaken, and the strategies employed to achieve the goals outlined in previous chapters.
+
+\section{Lexing and Parsing}
+
+Typically the first two stages in the front end of a compiler will be lexing and parsing the input [TODO REF]. The aim of these two steps is to first convert a stream of symbols into one of tokens, and then the token stream into a parse tree. There are many tools for automatically generating an efficient lexer/parser from a context-free grammar [TODO REF] which would normally be employed at this point, however Prolog contains the inbuilt predicate read_term/3 that is mostly capable of performing functions.
+
+\subsection{The read_term/3 Predicate}
+
+The ISO standard \cite{ISOPROLOG} read_term(+Stream, -Term, +Options) predicate is true if and only if a Prolog term can be read from \emph{Stream} and unified with \emph{Term} controlled by the list of options \emph{Options}. 
+
+\subsection{Declaring New Operators}
+
+As OOPL is syntactically identical to prolog, to allow the read_term/3 predicate to correctly parse OOPL it suffices to declare new operators. This is done in Prolog with the op/3 predicate. 
+
+\subsection{Terms: Syntax vs Semantics}
+
+Prolog is 
+
+\section{Intermediate Representation}
+
+\section{Generation}
+
+
+
+\section{Syntax replacement}
+
+\section{Representing Classes}
+
+\section{Representing Objects}
+
+\section{Bootstrapping}
+
+\section{Summary}
+
+\chapter{Evaluation}
+
+TODO 2800
+
+
+\chapter{Conclusion}
+
+Included of above
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% the bibliography
+\addcontentsline{toc}{chapter}{Bibliography}
+\bibliography{refs}{}
+
+\begin{comment}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% the appendices
+\appendix
+
+
+\chapter{Project Proposal}
+\end{comment}
+
+\end{document}
