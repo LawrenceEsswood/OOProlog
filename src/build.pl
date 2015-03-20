@@ -12,13 +12,17 @@ copy_file_from_dir(Dir1, Dir2, Name) :- file(Dir1, Name, P1), file(Dir2, Name, P
 
 test_N_path(N, P) :- paths(test, Dir), atomic_list_concat([Dir, 'test', N, '.oopl'], P).
 build_N_path(N, P) :- paths(build, Dir), atomic_list_concat([Dir, 'test', N, '.out.pl'], P).
+
+:- dynamic standard_path/1.
 standard_path('./standard/standard.oopl').
+
 standard_out_path(X) :- paths(build, BP), atom_concat(BP, 'standard.out.pl', X).
 
 load_compiler :-  file(build, 'generate.pl', G), [G].
 
 % Use the prolog based compiler to build the standard include
 build_standard :- standard_path(In), standard_out_path(Out), compile(In, Out, '', [no_munge, no_interpret]).
+swap_standard :- retractall(standard_path(_)), assert(standard_path('./standard/standard2.oopl')).
 
 % Build the nth test code
 build_test(N) :- test_N_path(N, P), build_N_path(N, P2), generic_compile(P, P2).
@@ -38,6 +42,11 @@ copy_from_milestone :-
 build_from_ooprolog :- 
 	file(oopl, 'generate.oopl', InPath),
 	file(tmp, 'generate.pl', OutPath),
+	generic_compile(InPath, OutPath, [no_interpret]).
+
+build_interpret :-
+	file(oopl, 'interpret.oopl', InPath),
+	file(build, 'interpret.pl', OutPath),
 	generic_compile(InPath, OutPath, [no_interpret]).
 
 copy_from_tmp :- copy_file_from_dir(tmp, build, 'generate.pl').

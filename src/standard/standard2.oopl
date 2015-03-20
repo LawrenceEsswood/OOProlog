@@ -15,15 +15,15 @@ build_class(Type, C, ExtraMembers) :-
 	pairs_keys_values(Fields, Type::'Fields', _),
 	append(Fields, Predicates, MembersLs),
 
-	split_tupples(ExtraMebers, EK, EV),
+	split_tupples(ExtraMembers, EK, EV),
 	pairs_keys_values(Ex, EK, EV),
 	append(MembersLs, Ex, AllMembers),
-	
+
 	dict_pairs(Members, members, AllMembers).
 
 ::(class(_,M), Nm, Res) :- Res = M.Nm.
 %Backwards compat
-::(C, Nm, Res, N) :- ::(C, Nm, Res).
+::(C, Nm, Res, _) :- ::(C, Nm, Res).
 
 construct_classType(This, N, F, Pred, Par, Out, Cons) :- 
 	::(This, 'Name', N, 1),
@@ -33,7 +33,11 @@ construct_classType(This, N, F, Pred, Par, Out, Cons) :-
 	::(This, 'Outer', Out, 5),
 	::(This, 'Constructor', Cons, 6).
 
-class_def__classType(X) :- X = class(X, members(('Name', classType),('Fields', ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor']),('Predicates', []), ('Parent',none), ('Outer', none), ('Constructor',construct_classType))).
+class_def__classType(X) :- X = class(X, Dict),
+	pairs_keys_values(Pairs, ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor'],
+		[classType, ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor'], [], none, none, construct_classType]),
+	dict_pairs(Dict, members, Pairs).
+
 
 /*
 class classType.

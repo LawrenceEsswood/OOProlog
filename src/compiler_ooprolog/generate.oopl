@@ -44,7 +44,7 @@ class scope.
 		write_standard(IO::'Out', defined_names(Names)),
 		write_standard(IO::'Out', '.
 :- [''./interpret.pl''].
-:- interpret.
+:- p_interpret.
 	').
 
 	% looks up a name to get its containing scope, FIXME wrong way round
@@ -236,6 +236,7 @@ class generator.
 	append_if_not_blank(Prefix, PredicateName, Result) :- Prefix \= '', atomic_list_concat(['p',Prefix, PredicateName], Result).
 	append_if_not_blank('', PredicateName, PredicateName).
 
+	make_predicate_name(pred(Nm, _), _, Nm) :- member(no_munge, Opts), !.
 	make_predicate_name(pred('', _), _, '').
 	make_predicate_name(pred(PredicateName, _), Scope, Result) :- PredicateName \= '', append_if_not_blank(Scope::'Prefix', PredicateName, Result).
 
@@ -245,24 +246,21 @@ class generator.
 	make_class_type_args(Scope, Bdy) :- add_this(['T'], Scope, Bdy).
 	% Easier to just use new
 	make_class_type_body(Name, Fields, Predicates, Bdy, Constructor, Statics) :- 
-		maplist(add_qoutes, Fields, QFields),
+		maplist(This::g_add_qoutes, Fields, QFields),
 		next_tmp(T),
 		expand_new(new('X', 'T', Name, QFields, Predicates, none, none, Constructor), T, Statics, NewComs),
 		list_to_comma_functor([class_def__classType('X') | NewComs], Bdy).
 
 	expand_new(Command, Con, Result) :- expand_new(Command, Con, [], Result).
-	expand_new(Command, Con, Statics, [build_class(Type, Class, Statics), ::(Type, Constructor, Con) , ((Con = none); Call)]) :- 
+	expand_new(Command, Con, Statics, [build_class(Type, Class, Statics), ::(Type, Constructor, Con) , ((Con = none) ; (Con \= none , Call))]) :- 
 		Command =.. [new, Type, Class | Args],
-		add_qoutes('Constructor', Constructor),
+		g_add_qoutes('Constructor', Constructor),
 		Call =.. [call, Con, Class | Args].
 
 	% Generates prolog from a single definition
 	make_from_fact(Nm, ArgLst, [], Res) :- Res =.. [Nm|ArgLst].
 	% FIXME this might not print properly
 	make_from_fact(Nm, ArgLst, Commands, (P1 :- P2)) :- Commands \= [], P1 =.. [Nm|ArgLst], list_to_comma_functor(Commands, P2).
-
-	% Recreates the top scope from given names //TODO obselete
-	load_scope(Names, Scope) :- new(scope, Scope, '__', Names, top, top, []).
 
 	%Walks the parse tree finding out names to create scope
 
@@ -297,11 +295,10 @@ class generator.
 		append(Cmds3, [::(Xd,Yd,Tmp)], Cmds4).
 
 	%Atoms might refer to a predicate
-	resolve_arg(Scope, Reps, Reps, atom(X), P, [], true) :-
+	resolve_arg(Scope, Reps, Reps, atom(X), P, Commands, true) :-
 		call(Scope::lookup, pred(X, 0), PredScope), !,
-		make_predicate_name(pred(X, 0), PredScope, Nm),
-		add_this([], PredScope, pred(X, 0), Args),
-		P =.. [Nm|Args].
+		(not(call(PredScope::'pred_is_constructor', pred(X, 0))); throw('Cannot directly call a constructor.')),
+		make_dynamic(PredScope, X, [], P, Commands).
 
 	%Atoms may refer to a class
 	resolve_arg(Scope, Reps, [(atom(X),Tmp)|Reps], atom(X), Tmp, [C], _) :-
@@ -311,12 +308,12 @@ class generator.
 		add_this([Tmp], DefScp, Ls),
 		C =.. [F|Ls].
 
-	resolve_arg(_, R, R, atom(X), Y, [], _) :- !, add_qoutes(X, Y).
+	resolve_arg(_, R, R, atom(X), Y, [], _) :- !, g_add_qoutes(X, Y).
 
 	%Variables might be members
 	resolve_arg(Scope, Reps, [(var(Arg),Tmp)|Reps], var(Arg), Tmp, [::('This', ArgQ, Tmp)], _) :-
 		call(Scope::lookup, field(Arg), _), !,
-		add_qoutes(Arg, ArgQ),
+		g_add_qoutes(Arg, ArgQ),
 		next_tmp(Tmp).
 
 	resolve_arg(_, R, R, var(Arg), Arg, [], _) :- !.
@@ -324,20 +321,18 @@ class generator.
 	% Tmps will never mean anything else in context
 	resolve_arg(_, R, R, tmp(Arg), Arg, [], _) :- !.
 
-	% might need to add a prefix and/or 'This' 
-	resolve_arg(Scope, Reps, RepsOut, compound(P), Pd, Commands, true) :- 
+	% invoke dynamically
+	resolve_arg(Scope, Reps, RepsOut, compound(P), Pd, Commands3, true) :- 
 		P =.. [Nm|Args],
 		length(Args, N),
 		call(Scope::lookup, pred(Nm, N), PredScope),
 		!,
 		(not(call(PredScope::'pred_is_constructor', pred(Nm, N))); throw('Cannot directly call a constructor.')),
-		make_predicate_name(pred(Nm, N), PredScope, NewName),
 		resolve_args(Scope, Reps, RepsOut, Args, Args2, Commands, false),
-		add_this(Args2, PredScope, pred(Nm, N), Args3),
-		Pd =.. [NewName|Args3].
+		make_dynamic(PredScope, Nm, Args2, Pd, Commands2),
+		append(Commands, Commands2, Commands3).
 
 	% This is the case where we have a compound we cant lookup, 
-	% FIXME, replace with access/call for correct semantics
 	resolve_arg(Scope, Reps, RepsOut, compound(P), Pd, Commands, Chge) :-
 		P =.. [Nm|Args],
 		contin_change(Nm, Chge, Chge2),
@@ -356,6 +351,12 @@ class generator.
 		append(Commands, Commands2, AllCommands).
 
 	resolve_args(_, R, R,[],[],[],_).
+
+	make_dynamic(Scope, Nm, Args, Res, []) :- call(Scope::'is_top'), !,
+		make_predicate_name(pred(Nm, _),
+		Scope, NewName), Res =.. [NewName|Args].
+
+	make_dynamic(_, Nm, Args, Res, [::('This', Nm, Tmp)]) :- next_tmp(Tmp), Res =.. ['call', Tmp |Args].
 
 	goal_funcs([',',';','not']).
 
@@ -425,6 +426,9 @@ class generator.
 
 	%Fields don't generate anything
 	generate_def(field(Nm), Scope) :- not(call(Scope::is_top)); compile_exception(['Field \'', Nm, '\' defined outside of a class.']).
+
+	g_add_qoutes(X, X) :- member(no_qoutes, Opts), !.
+	g_add_qoutes(X, Y) :- add_qoutes(X, Y).
 
 	%Todo: get some line number action
 	compile_exception(Ms) :- throw_atoms(Ms).
