@@ -6,7 +6,7 @@ call_list([X|Xs]) :- call(X), call_list(Xs).
 call_all(X) :- X =.. [',' | Xs], call_list(Xs).
 call_all(X) :- functor(X , Nm, _), Nm \= ',', call(X).
 
-interpret :- write('OOPL query interpeter.\n'),
+interpret :- write('OOPL query interpreter.\n'),
 	defined_names(Names),
 	new(interpeter, I, Names),
 	call(I::'interpret').
@@ -36,7 +36,7 @@ class interpeter extends generator.
 
 	attempt_goal(Res, Eqs) :- 
 		call_list(Res),
-		write('true.\n'),
+		write('true.\n\n'),
 		pretty_write_list(user_output, 0, Eqs),
 		get_single_char(C),
 		C \= 59,
