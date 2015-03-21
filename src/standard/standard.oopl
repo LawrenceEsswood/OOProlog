@@ -16,6 +16,9 @@ build_class(Type, C, ExtraMembers) :-
 % Failure can occur with multiple inheritance. N should be seen as a 'hint'.
 ::(class(_,M), Nm, Res, _) :- arg(_, M, (Nm, Res)). 
 
+object(class(_,_)).
+classof(class(T,_),T).
+
 construct_classType(This, N, F, Pred, Par, Out, Cons) :- 
 	::(This, 'Name', N, 1),
 	::(This, 'Fields', F, 2),

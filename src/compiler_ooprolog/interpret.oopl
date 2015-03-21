@@ -65,11 +65,13 @@ class interpeter extends generator.
 	pretty_write_list(_, _, []) :- !.
 	pretty_write_list(Strm, Lvl, [V|Vs]) :- pretty_write(Strm, Lvl, V), !, pretty_write_list(Strm, Lvl, Vs).
 
-	eqv(Dict, Key, =(Key, V)) :- V = Dict.Key.
+	eqv(Object, Key, =(Key, Object::Key)).
 
 	pretty_write(Strm, Lvl, =(K, V)) :- var(V), !, write_tabs(Strm, Lvl), write(Strm, =(K, V)), write(Strm, '.\n').
 	 	
-	pretty_write(Strm, Lvl, =(V, class(T, M))) :- !, write_tabs(Strm, Lvl), 
+	pretty_write(Strm, Lvl, =(V, C)) :- object(C), !,
+			classof(C, T),
+			write_tabs(Strm, Lvl), 
 	 		write(V),
 	 		write(' = '),
 	 		write(Strm, 'instance of '),
@@ -78,7 +80,7 @@ class interpeter extends generator.
 	 		Lvl2 is Lvl + 1,
 	 		write_tabs(Strm, Lvl2, '|'),
 	 		write(Strm, '\n'),
-	 		add_functor_args(This::eqv, [M], EQV),
+	 		add_functor_args(This::eqv, [ C], EQV),
 	 		maplist(EQV, T::'Fields', Vs),
 	 		pretty_write_list(Strm, Lvl2, Vs).
 

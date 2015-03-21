@@ -25,6 +25,9 @@ build_class(Type, C, ExtraMembers) :-
 %Backwards compat
 ::(C, Nm, Res, _) :- ::(C, Nm, Res).
 
+object(class(_,_)).
+classof(class(T,_),T).
+
 construct_classType(This, N, F, Pred, Par, Out, Cons) :- 
 	::(This, 'Name', N, 1),
 	::(This, 'Fields', F, 2),
