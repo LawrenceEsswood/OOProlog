@@ -2,10 +2,14 @@
 
 paths(milestone, '../milestone/').
 paths(build, '../build/').
+paths(examples, './eval/Examples/').
 paths(oopl, './compiler_ooprolog/').
 paths(pl, './compiler_prolog/').
 paths(test,'./tests/').
 paths(tmp,'../tmp/').
+
+oopl_file(File, OOPL_File) :- atomic_list_concat([File, '.oopl'], OOPL_File).
+oopl_out_file(File, Out) :- atomic_list_concat([File, '.out.pl'], Out).
 
 file(Dir, Name, Path) :- paths(Dir, DirPath), atom_concat(DirPath, Name, Path).
 copy_file_from_dir(Dir1, Dir2, Name) :- file(Dir1, Name, P1), file(Dir2, Name, P2), copy(P1, P2).
@@ -26,6 +30,15 @@ swap_standard :- retractall(standard_path(_)), assert(standard_path('./standard/
 
 % Build the nth test code
 build_test(N) :- test_N_path(N, P), build_N_path(N, P2), generic_compile(P, P2).
+
+% Build an example
+build_example(Name) :-
+	oopl_file(Name, InF),
+	oopl_out_file(Name, OutF),
+	file(examples, InF, InP),
+	file(build, OutF, OutP),
+	load_compiler,
+	generic_compile(InP, OutP).
 
 % Build and run the nth test
 run_test(N) :- load_compiler, build_test(N), build_N_path(N, P), [P].
