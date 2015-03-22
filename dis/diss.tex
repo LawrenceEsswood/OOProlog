@@ -91,8 +91,6 @@
 
 \bibliographystyle{plain}
 
-\begin{comment}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Title
 
@@ -139,14 +137,15 @@ by \texttt{detex diss.tex | tr -cd '0-9A-Za-z $\tt\backslash$n' | wc -w}
 \section*{Original Aims of the Project}
 
 TODO
+The aims of the project were to produce a bootstrapping compiler that takes an Object-Oriented Dialect of Prolog and produces Prolog as the target. The Compiler should, at the least, be able to handle the definition of classes
 
 \section*{Work Completed}
 
-TODO
+The C
 
 \section*{Special Difficulties}
 
-TODO
+None.
  
 \newpage
 \section*{Declaration}
@@ -174,7 +173,6 @@ TODO
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % now for the chapters
-\end{comment}
 
 \pagestyle{headings}
 
@@ -726,9 +724,7 @@ Prolog is
 
 \section{Generation}
 
-
-
-\section{Syntax replacement}
+% \section{Syntax replacement}
 
 \section{Representing Classes}
 
@@ -736,16 +732,142 @@ Prolog is
 
 \section{Bootstrapping}
 
+\section{Interpreter}
+
+\section{Unit Testing}
+
 \section{Summary}
 
 \chapter{Evaluation}
 
 TODO 2800
 
+\section{Correctness}
+
+The primary concern of the project is that the compiler produces output that obeys the semantics outlined in the preparation section. A number of code examples were carefully crafted that exemplified each feature of the language, and their outputs were compared with the expected result. Given here are the example programs:
+
+\subsection{EXAMPLES}
+
+\section{Performance}
+
+The aim of extending Prolog with objects was to provide more power to the programmer, however this incurs a penalty in terms of execution time and memory overhead. The aim of this section is to quantify these penalties and to contrast to other implementations.
+
+\subsection{Dynamic Dispatch}
+
+\begin{center}
+\begin{tabular}{c|c|c}
+Type of Call & \multicolumn{2}{c}{Time for 1 000 000 calls /s} \\
+\hline
+Baseline&\multicolumn{2}{c}{0.141}\\
+Call Predicate&\multicolumn{2}{c}{0.187}\\
+\hline
+Dynamic Dispatch&Compound Structure & Hash Structure \\
+\hline
+1 Member&0.406	&0.452\\
+2 Members&0.452&0.452\\
+4 Members&0.562&0.452\\
+8 Members&0.718&0.452\\
+16 Members&1.05&0.468\\
+32 Members&1.72&0.468\\
+64 Members&3.04&0.468\\
+128 Members&5.71&0.484\\
+256 Members&11&0.484\\
+512 Members&21.9&0.484\\
+1024 Members&43.3&0.468\\
+\end{tabular}
+\end{center}
+
+\subsection{Objects}
+
+Due to the way objects are used in OOPL, their creation and destruction is commonplace. Here we evaluate the how much time and space is required to allocate an object and call a simple constructor. The same classes from the Dynamic Dispatch benchmarks were used, with a constructor that accepted no arguments and an empty body.
+
+\subsubsection{Time}
+
+The time to construct and destroy a set number of objects:
+
+\begin{center}
+\begin{tabular}{c|c|c}
+
+& \multicolumn{2}{c}{Time for 100 000 constructions /s} \\
+\hline
+Number of Members &Compound Structure & Hash Structure \\
+\hline
+1	&	0.874		&	1.22	\\
+2	&	0.936		&	1.12	\\
+4	&	1.01		&	1.29	\\
+8	&	1.22		&	1.81	\\
+16	&	1.59		&	2.25	\\
+32	&	2.32		&	3.34	\\
+64	&	3.78		&	5.76	\\
+128	&	6.75		&	10.4	\\
+256	&	12.6		&	19.8	\\
+512	&	24.5		&	38.7	\\
+1024	&	49.2		&	78.3	\\
+
+\end{tabular}
+\end{center}
+
+\subsubsection{Space}
+
+\begin{center}
+\begin{tabular}{c|c|c}
+
+& \multicolumn{2}{c}{Global Stack Footprint of One Object /bytes} \\
+\hline
+Number of Members &Compound Structure & Hash Structure \\
+\hline
+1	&	720		&	584	\\
+2	&	816		&	664	\\
+4	&	1008		&	824	\\
+8	&	1392		&	1144	\\
+16	&	2160		&	1784	\\
+32	&	3696		&	3064	\\
+64	&	6768		&	5624	\\
+128	&	12912		&	10744	\\
+256	&	25200		&	20984	\\
+512	&	49776		&	41464	\\
+1024	&	98928		&	82424	\\
+
+\end{tabular}
+\end{center}
+
+\subsection{Comparison Example}
+
+The previous performance benchmarks were very limited in that they did not perform any real work. To better evaluate the performance of OOPL a small algorithm was written, in a very similar style, with three languages: Prolog, OOPL, and Logtalk\footnote{Logtalk is another, freely available, implementation of `Prolog with Objects'}.
+
+\bigskip
+
+The algorithm chosen was a sort using a binary heap. This choice made in order to make heavy use of the new language features. With the Prolog implementation the heaps state was stored in a compound. With the OOPL and Logtalk implementations the heap's state was encapsulated in an object, and public methods provided the ability to manipulate the heap. All 3 implementations of insert/extract returned a new compound/object. This meant that the OOPL and Logtalk implementations would suffer a penalty for each of the dynamic calls and object creation/destruction.
+
+\bigskip
+
+A random set of elements was generated, and the time to insert/extract all elements was timed, for each of the three implementation languages over a number of sample sizes. The results were as follows:
+
+\begin{center}
+\begin{tabular}{c|c|c|c|c|c|c}
+ & \multicolumn{3}{c}{Time /s} &  \multicolumn{3}{c}{Relative Performance to Prolog}\\
+ \hline
+Number of Elements 	& Prolog & OOPL & Logtalk & Prolog & OOPL & Logtalk \\
+\hline
+ 10 000				& 0.265	& 1.14	& 81.6 & 1.00	& 4.30	& 308		\\
+ 100 000			& 3.95	& 14.1	& N/A  & 1.00	& 3.57	& N/A		\\
+ 1 000 000			& 50.8	&182 	& N/A  & 1.00	& 3.58	& N/A		\\
+\end{tabular}
+\end{center}
+
+It should be noted that the incredibly poor performance of Logtalk was due to the dynamic creation of such a large number of objects, and not due to dynamic dispatch. In fact for the larger samples the tests took a prohibitively long time and so no results could be recorded. Obviously this slowdown could have been avoided (The Prolog program would have been valid in both OOPL and Logtalk) but this would have required not making use of the new language features.
+
+\bigskip
+
+From the results it should be inferred that OOPL provides a very lightweight object implementation of objects compared to languages like Logtalk\footnote{Logtalk performs considerably better if objects are only defined statically}, even though a considerable overhead is still incurred. 
+
+\section{Bootstrapping}
+
+
 
 \chapter{Conclusion}
 
-Included of above
+Part of 2800
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
