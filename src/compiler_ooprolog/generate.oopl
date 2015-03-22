@@ -197,11 +197,10 @@ class generator.
 
 		add_functor_args(This::pair_predicate, [Scope], F),
 		filter(F, NonStaticPreds, ThisPredicates),
-		find_parents_definitions(Scope, Hchild::'Parents', ParentFields, ParentPredicates, ParentSuperPreds),
+		find_parents_definitions(Scope, Hchild::'Parents', ParentFields, ParentPredicates, _),
 		(intersection(ThisFields, ParentFields,[]) ; throw('Cannot redefine a parents field.')),  %Might allow redefinition, use union
 		append(ParentFields, ThisFields, Fields),
-		predicate_inherit(ThisPredicates, ParentPredicates, Predicates, ThisSuperPreds),
-		append(ParentSuperPreds, ThisSuperPreds, SuperPreds).
+		predicate_inherit(ThisPredicates, ParentPredicates, Predicates, SuperPreds).
 
 	not_same_pred_name(Nm, (pred(Nm2,N), Res), (pred(Nm2,N), Res)) :- Nm \= Nm2.
 

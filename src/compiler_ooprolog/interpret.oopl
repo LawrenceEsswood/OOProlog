@@ -42,8 +42,7 @@ class interpeter extends generator.
 		call_list(Res),
 		write('true.\n'),
 		pretty_write_list(user_output, 0, Eqs),
-		write('\n'),
-		get_single_char(C),
+		get_single_char(C), write('\n'),
 		C \= 59,
 		!.
 	attempt_goal(_, _) :- write('fail.\n').
