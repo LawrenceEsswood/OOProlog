@@ -48,18 +48,22 @@ class scope.
 	').
 
 	% looks up a name to get its containing scope, FIXME wrong way round
-	lookup(Arg, ScopeRes) :- lookup_nesting(Arg, ScopeRes), !.
-	lookup(Arg, ScopeRes) :- lookup_parent(Arg, ScopeRes).
+	lookup(Arg, ScopeRes) :- lookup_parent(Arg, ScopeRes), !.
+	lookup(Arg, ScopeRes) :- lookup_nesting(Arg, ScopeRes).
 
 	lookup_here(Arg, This) :- member(Def, Defs), get_name(Def, Arg).
-	lookup_nesting(Arg, Res) :- not(is_top), call(Parent::lookup_nesting, Arg, Res).
 	lookup_nesting(Arg, Res) :- lookup_here(Arg, Res).
+	lookup_nesting(Arg, Res) :- not(is_top), call(Parent::lookup_nesting, Arg, Res).
+	lookup_parent(Arg, Res) :- lookup_here(Arg, Res).
 	lookup_parent(Arg, Res) :-
 		not(is_top),
 		[P] = Hdr::'Parents',
+		not_in_self(Arg, P),
 		get_parent_scope(P, PScope),
 		call(PScope::lookup_parent, Arg, Res).
-	lookup_parent(Arg, Res) :- lookup_here(Arg, Res).
+
+	not_in_self(class(P), P) :- !, fail.
+	not_in_self(_,_).
 
 	% trys to find a scope of a certain class
 	scope_of(Pname, Scp) :- member(cs(Pname, Scp), CS).

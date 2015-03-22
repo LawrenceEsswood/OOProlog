@@ -21,6 +21,10 @@ class dumped_scope.
 	pred_has_mod(_,_) :- fail.
 endclass.
 
+class parser_keep_vars extends parser.
+	name_dont_care(_, _) :- !.
+endclass.
+
 class interpeter extends generator.
 
 	Tag.
@@ -29,15 +33,16 @@ class interpeter extends generator.
 	next_tmp(_) :- !.
 
 	interpeter(Names) :- 
-		new(parser, Parser, _),
+		new(parser_keep_vars, Parser, _),
 		Opts = [no_qoutes],
 		Tag = Parser::'tag_atoms',
 		new(dumped_scope, Scope, Names).
 
 	attempt_goal(Res, Eqs) :- 
 		call_list(Res),
-		write('true.\n\n'),
+		write('true.\n'),
 		pretty_write_list(user_output, 0, Eqs),
+		write('\n'),
 		get_single_char(C),
 		C \= 59,
 		!.
@@ -76,15 +81,16 @@ class interpeter extends generator.
 	 		write(' = '),
 	 		write(Strm, 'instance of '),
 	 		write(Strm, T::'Name'),
-	 		write(Strm, '.\n'),
 	 		Lvl2 is Lvl + 1,
-	 		write_tabs(Strm, Lvl2, '|'),
+	 		(T::'Fields' = [] ; write(Strm, '.\n'), write_tabs(Strm, Lvl2, '|')),
 	 		write(Strm, '\n'),
 	 		add_functor_args(This::eqv, [ C], EQV),
 	 		maplist(EQV, T::'Fields', Vs),
 	 		pretty_write_list(Strm, Lvl2, Vs).
 
 	pretty_write(Strm, Lvl, X) :- write_tabs(Strm, Lvl), write(Strm, X), write('.\n').
+
+
 
 	write_tabs(S, N) :- write_tabs(S, N, '|-').
 
