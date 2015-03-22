@@ -1,0 +1,8 @@
+times(1000000).
+
+entries([
+			(p_baseline, baseline)
+		]).
+
+foo(bar).
+baseline :- call(p_foo,bar).

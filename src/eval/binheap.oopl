@@ -1,0 +1,66 @@
+	%%%%%%%%%%%%%%%
+	% Binary Heap %
+	%%%%%%%%%%%%%%%
+
+class binary_heap.
+	H. 
+	Size.
+
+	binary_heap(N) :- functor(H, elements, N), Size = 1.
+	binary_heap(H, Size).
+
+	insert_element(Element, Heap) :- 
+		setarg(Size, H, Element),
+		NewSize is Size + 1, 
+		bubble_up(Size),
+		new(binary_heap, Heap, H, NewSize).
+
+	extract_min(Element, Heap) :-
+		arg(1, H, Element),
+		NewSize is Size - 1,
+		sift_down(NewSize),
+		new(binary_heap, Heap, H, NewSize).
+
+	bubble_up(1) :- !.
+	bubble_up(X) :- 
+		X > 1,
+		PX is X div 2,
+		less(X, PX), !,
+		swap(X, PX),
+		bubble_up(PX).
+	bubble_up(_).
+
+	sift_down(0) :- !.
+	sift_down(X) :- X \= 0, arg(X, H, T), setarg(1, H, T), sift_down(X, 1).
+
+	sift_down(Lim, X) :- TwoX is 2 * X, TwoX >= Lim, !.
+	sift_down(Lim, X) :- LimD is Lim-1, LimD is 2 * X, (not(less(LimD, X)) ; swap(LimD, X)), !.
+	sift_down(Lim, X) :- 
+		C1 is 2 * X, C2 is C1 + 1, 
+		min(C1, C2, C),
+		less(C, X),
+		!,
+		swap(C, X),
+		sift_down(Lim, C).
+	sift_down(_, _).
+
+
+	swap(X1, X2) :-
+		arg(X1, H, T1),
+		arg(X2, H, T2),
+		setarg(X1, H, T2),
+		setarg(X2, H, T1).
+
+	less(X1, X2) :- 
+		arg(X1, H, (K1, _)),
+		arg(X2, H, (K2, _)),
+		K1 < K2.
+
+	min(C1, C2, C1) :- less(C1, C2), !.
+	min(_, C2, C2).	
+
+endclass.
+
+new_heap(N, Heap) :- new(binary_heap, Heap, N).
+extract_min(Element, Heap, Heap2) :- call(Heap::'extract_min', Element, Heap2).
+insert_element(Element, Heap, Heap2) :- call(Heap::'insert_element', Element, Heap2).

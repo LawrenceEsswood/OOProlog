@@ -1,0 +1,30 @@
+:- oopl_include('./objects.oopl').
+
+times(100000).
+entries([
+			(p_baseline, baseline),
+			(p_create_c1, 1),
+			(p_create_c2, 2),
+			(p_create_c3, 4),
+			(p_create_c4, 8),
+			(p_create_c5, 16),
+			(p_create_c6, 32),
+			(p_create_c7, 64),
+			(p_create_c8, 128),
+			(p_create_c9, 256),
+			(p_create_c10, 512),
+			(p_create_c11, 1024)
+		]).
+
+baseline.
+create_c1 :- new(c1, _).
+create_c2 :- new(c2, _).
+create_c3 :- new(c3, _).
+create_c4 :- new(c4, _).
+create_c5 :- new(c5, _).
+create_c6 :- new(c6, _).
+create_c7 :- new(c7, _).
+create_c8 :- new(c8, _).
+create_c9 :- new(c9, _).
+create_c10 :- new(c10, _).
+create_c11 :- new(c11, _).
