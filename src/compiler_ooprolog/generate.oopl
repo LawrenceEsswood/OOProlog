@@ -363,8 +363,8 @@ class generator.
 	resolve_args(_, R, R,[],[],[],_).
 
 	make_dynamic(Scope, Nm, Args, Res, []) :- call(Scope::'is_top'), !,
-		make_predicate_name(pred(Nm, _),
-		Scope, NewName), Res =.. [NewName|Args].
+		make_predicate_name(pred(Nm, _), Scope, NewName),
+		Res =.. [NewName|Args].
 
 	make_dynamic(_, Nm, Args, Res, [::('This', Nm, Tmp)]) :- next_tmp(Tmp), Res =.. ['call', Tmp |Args].
 

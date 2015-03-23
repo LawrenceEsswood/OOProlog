@@ -24,6 +24,7 @@ standard_path('./standard/standard.oopl').
 standard_out_path(X) :- paths(build, BP), atom_concat(BP, 'standard.out.pl', X).
 
 load_compiler :-  file(build, 'generate.pl', G), [G], link_names.
+load_interpreter :- file(build, 'interpret.pl', I), [I], link_names.
 
 % Use the prolog based compiler to build the standard include
 build_standard :- 

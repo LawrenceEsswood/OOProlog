@@ -1,0 +1,10 @@
+class a.
+	X.
+endclass.
+
+class b extends a.
+	Y.
+endclass.
+
+foo.
+bar(a,b).
