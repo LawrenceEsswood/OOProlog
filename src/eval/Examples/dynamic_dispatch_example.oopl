@@ -1,0 +1,16 @@
+class animal.
+	says(_) :- fail.
+
+	vocalise :-
+		says(X),
+		write(X),
+		nl.
+endclass.
+
+class bird extends animal.
+	says('cheep cheep').
+endclass.
+
+class polly extends bird.
+	says('Who\'s a pretty boy then?').
+endclass.

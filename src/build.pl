@@ -1,4 +1,5 @@
 :- ['./utils/utils.pl'].
+:- ['./make_prolog_interface'].
 
 paths(milestone, '../milestone/').
 paths(build, '../build/').
@@ -22,7 +23,7 @@ standard_path('./standard/standard.oopl').
 
 standard_out_path(X) :- paths(build, BP), atom_concat(BP, 'standard.out.pl', X).
 
-load_compiler :-  file(build, 'generate.pl', G), [G].
+load_compiler :-  file(build, 'generate.pl', G), [G], link_names.
 
 % Use the prolog based compiler to build the standard include
 build_standard :- standard_path(In), standard_out_path(Out), compile(In, Out, '', [no_munge, no_interpret]).
@@ -50,7 +51,8 @@ copy_from_prolog :-
 	copy_file_from_dir(pl, build, 'interpret.pl').
 
 copy_from_milestone :-
-	copy_file_from_dir(milestone, build, 'generate.pl').
+	copy_file_from_dir(milestone, build, 'generate.pl'),
+	copy_file_from_dir(milestone, build, 'standard.out.pl').
 
 build_from_ooprolog :- 
 	file(oopl, 'generate.oopl', InPath),
@@ -69,12 +71,3 @@ cycle_compiler :- load_compiler, build_from_ooprolog, copy_from_tmp.
 
 % Starting point using prolog compiler
 %main :- copy_from_prolog, load_compiler, build_standard.
-
-%some compatability stuff
-compile(In,Out,Extras,Opts):- p_compile(In,Out,Extras,Opts).
-quick(X,Extras,Opts):- p_quick(X,Extras,Opts).
-quick(X,Opts):- p_quick(X,Opts).
-quick(X):- p_quick(X).
-generic_compile(In,Out):- p_generic_compile(In,Out).
-generic_compile(In,Out,Opts):- p_generic_compile(In,Out,Opts).
-quick_generic(In):- p_quick_generic(In).

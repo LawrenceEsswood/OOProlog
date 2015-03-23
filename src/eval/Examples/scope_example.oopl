@@ -1,0 +1,20 @@
+predicate(outside).
+
+class a.
+	predicate(within_a).
+	a(X) :- predicate(X).
+endclass.
+
+class b extends a.
+	foo(X) :- predicate(X).
+	b(X) :- predicate(X).
+endclass.
+
+class c extends a.
+	predicate(within_c).
+	c(X) :- predicate(X).
+endclass.
+
+class d.
+	d(X) :- predicate(X).
+endclass.

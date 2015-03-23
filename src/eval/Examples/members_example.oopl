@@ -1,0 +1,7 @@
+class members.
+	Field1. Field2. Field3.
+	members :- Field1 = 1, Field2 = 2, Field3 = 4.
+
+	predicate1(X) :- X is Field1 + Field2 + Field3.
+	predicate2(X) :- X is Field1 * Field2 * Field3.
+endclass.

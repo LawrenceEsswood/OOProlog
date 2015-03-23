@@ -1,0 +1,8 @@
+class construct.
+	Field1. Field2. Field3.
+	
+	construct(Field1, Field2, Field3).
+	construct(Field3, Field2, Field1).
+
+	construct(Field1, Field2) :- Field3 is Field1 + Field2.
+endclass.

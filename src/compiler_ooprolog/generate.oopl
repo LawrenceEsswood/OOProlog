@@ -42,10 +42,7 @@ class scope.
 	dump(IO) :-
 		get_defined_names(Defs, Names),
 		write_standard(IO::'Out', defined_names(Names)),
-		write_standard(IO::'Out', '.
-:- [''./interpret.pl''].
-:- p_interpret.
-	').
+		write(IO::'Out', '.').
 
 	% looks up a name to get its containing scope, FIXME wrong way round
 	lookup(Arg, ScopeRes) :- lookup_parent(Arg, ScopeRes), !.
@@ -268,7 +265,13 @@ class generator.
 	%Walks the parse tree finding out names to create scope
 
 	% Top level predicate for generating prolog
-	generate_defs_top(Defs) :- new(scope, TopScope, Defs), generate_defs(Defs, TopScope), (member('no_interpret',Opts);call(TopScope::dump, IO)).
+	generate_defs_top(Defs) :- new(scope, TopScope, Defs), generate_defs(Defs, TopScope), call(TopScope::dump, IO), interp.
+
+	interp :- not(member('no_interpret',Opts)), !,
+			write_standard(IO::'Out', '
+:- [''./interpret.pl''].
+:- p_interpret.').
+	interp.
 
 	% Generates prolog from a list of definitions
 	generate_defs([Def|Defs], Scope) :- generate_def(Def, Scope), generate_defs(Defs, Scope).

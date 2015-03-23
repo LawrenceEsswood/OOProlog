@@ -1,0 +1,15 @@
+class class_a.
+	f(a).
+endclass.
+
+class class_b extends class_a.
+	f(b).
+endclass.
+
+class class_c extends class_a.
+	f(c) :- !.
+endclass.
+
+class class_d extends class_b.
+	f(d).
+endclass.

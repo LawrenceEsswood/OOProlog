@@ -748,6 +748,158 @@ The primary concern of the project is that the compiler produces output that obe
 
 \subsection{EXAMPLES}
 
+	\subsubsection{Constructing Classes}
+	
+?-new(construct, C, a, b, c).
+true.
+C = instance of construct.
+        |
+        |-Field1=a.
+        |-Field2=b.
+        |-Field3=c.
+|: 
+true.
+C = instance of construct.
+        |
+        |-Field1=c.
+        |-Field2=b.
+        |-Field3=a.
+|: 
+fail.
+?-new(construct, C, 1, 2).
+true.
+C = instance of construct.
+        |
+        |-Field1=1.
+        |-Field2=2.
+        |-Field3=3.
+|: 
+fail.
+
+	\subsubsection{Accessing Members}
+	
+?-new(members, M), (F1, F2, F3) = (M::'Field1', M::'Field2', M::'Field3'), call(M::predicate1, X1), call(M::predicate2, X2).
+true.
+M = instance of members.
+        |
+        |-Field1=1.
+        |-Field2=2.
+        |-Field3=4.
+F1=1.
+F2=2.
+F3=4.
+X1=7.
+X2=8.
+
+	\subsubsection{Scoping}
+	
+?-predicate(X).
+true.
+X=outside.
+|:
+?-new(a, _, X).
+true.
+X=within_a.
+|:
+?-new(b, _, X).
+true.
+X=within_a.
+|:
+?-new(c, _, X).
+true.
+X=within_c.
+|:
+?-new(d, _, X).
+true.
+X=outside.
+
+	\subsubsection{Inheritance}
+	
+?-new(class_a, X), call(X::f, Y).
+true.
+X = instance of class_a
+Y=a.
+|: 
+fail.
+?-new(class_b, X), call(X::f, Y).
+true.
+X = instance of class_b
+Y=b.
+|: 
+true.
+X = instance of class_b
+Y=a.
+|: 
+fail.
+?-new(class_c, X), call(X::f, Y).
+true.
+X = instance of class_c
+Y=c.
+|: 
+fail.
+?-new(class_d, X), call(X::f, Y).
+true.
+X = instance of class_d
+Y=d.
+|: 
+true.
+X = instance of class_d
+Y=b.
+|: 
+true.
+X = instance of class_d
+Y=a.
+|: 
+fail.
+?-
+
+	\subsubsection {Dynamic Dispatch}
+
+?-new(bird, X), call(X::vocalise).
+cheep cheep
+true.
+X = instance of bird
+|: 
+fail.
+?-new(polly, X), call(X::vocalise).
+Who's a pretty boy then?
+true.
+X = instance of polly
+|: 
+cheep cheep
+true.
+X = instance of polly
+|: 
+fail.
+?-
+
+	\subsubsection{First Order Classes}
+	
+?-member(Class, [a,b]), new(Class, Object).
+true.
+Class = instance of classType.
+        |
+        |-Name=a.
+        |-Fields=[].
+        |-Predicates=[].
+        |-Parent=none.
+        |-Outer=none.
+        |-Constructor=none.
+Object = instance of a
+|: 
+true.
+Class = instance of classType.
+        |
+        |-Name=b.
+        |-Fields=[].
+        |-Predicates=[].
+        |-Parent=none.
+        |-Outer=none.
+        |-Constructor=none.
+Object = instance of b
+|: 
+fail.
+
 \section{Performance}
 
 The aim of extending Prolog with objects was to provide more power to the programmer, however this incurs a penalty in terms of execution time and memory overhead. The aim of this section is to quantify these penalties and to contrast to other implementations.

@@ -83,7 +83,7 @@ class parser.
 		call(Arg::'add_mod', Mod, Arg2),
 		R2 =.. [F, Arg2].
 
-	 parse_clause(Eqs, :- Xs, rule(R)) :- !,
+	parse_clause(Eqs, :- Xs, rule(R)) :- !,
 		tag_atoms(Eqs, Xs, Ys),
 		new(rule_token, R, '', Ys).
 
@@ -121,16 +121,6 @@ not_unified(A,B) :- not(unifiable(A,B,[])).
 % Appends a list to a disjunction
 comma_list_append([], P, P).
 comma_list_append([X|Xs],P,','(X,Pd)) :- comma_list_append(Xs, P, Pd).
-
-% Flattens a list of tuples into a single list %
-flatten_single([],[]).
-flatten_single([(V, NstLs)|Rest], Res) :- 
-	flatten_single(Rest, Restd), append(NstLs, [V|Restd], Res).
-
-% Flattens a list of tuples into two lists %
-flatten_pair([],[],[]).
-flatten_pair([(V, NstLs)|Rest],[V|RestV], Res) :- 
-	flatten_pair(Rest, RestV, RestNstLs), append(NstLs, RestNstLs, Res).
 
 bind_vars_to_name([=(X,X)|XS]) :- bind_vars_to_name(XS).
 bind_vars_to_name([]).

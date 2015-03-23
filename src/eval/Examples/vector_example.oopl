@@ -1,0 +1,13 @@
+class vector. 
+	X. Y. % Fields.
+	vector(X, Y). % Constructor. %
+	
+	 % A sum predicate. %
+	sum(V2, V3) :- 
+		X3 is X + V2::'X',
+		Y3 is Y + V2::'Y',
+		new(vector, V3, X3, Y3).
+		
+	% A magnitude predicate. %
+	magnitude(Mod) :- Mod is sqrt((X * X) + (Y * Y)). 
+endclass.
