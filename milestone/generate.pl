@@ -1,4 +1,4 @@
-:- ['./standard.out.pl'].
+:- ensure_loaded('./standard.out.pl').
 class_def_io(T):-class_def__classType(X),build_class(X,T,[]),::(X,'Constructor',T0), (T0=none;T0\=none,call(T0,T,io,['In','Out'],[],none,none,p_io_io)).
 p_io_io(This,T1,T2):- ::(This,'In',T1),::(This,'Out',T2).
 class_def_class_header_token(T):-class_def__classType(X),build_class(X,T,[]),::(X,'Constructor',T3), (T3=none;T3\=none,call(T3,T,class_header_token,['Name','Parents'],[],none,none,p_class_header_token_class_header_token)).
@@ -53,8 +53,6 @@ p_parser_tag_atoms(This,Eqs,X,var(X)):-var(X),'!',::(This,name_dont_care,T85),ca
 p_parser_tag_atoms(_,_,X,atom(X)):-atomic(X),'!'.
 p_parser_tag_atoms(This,Eqs,P,compound(P2)):-functor(P,_,_),P=..[Nm|Args],::(This,'tag_atoms',T86),add_functor_args(T86,[Eqs],F),maplist(F,Args,Args2),P2=..[Nm|Args2].
 p_not_unified(A,B):-not(unifiable(A,B,[])).
-p_comma_list_append([],P,P).
-p_comma_list_append([X|Xs],P, (X,Pd)):-p_comma_list_append(Xs,P,Pd).
 p_bind_vars_to_name([X=X|XS]):-p_bind_vars_to_name(XS).
 p_bind_vars_to_name([]).
 :-['../src/utils/utils.pl'].
@@ -73,7 +71,7 @@ p_scope_get_defined_names(This,[_|Ds],Ns):- ::(This,get_defined_names,T113),call
 p_scope_new_scope(This,Name,ParentPrefix):- ::(This,'Prefix',T114),atomic_list_concat(['_',Name,ParentPrefix],T114),::(This,'new_class_scope',T115),::(This,'Defs',T116),::(This,'CS',T117),filter(T115,T116,T117).
 p_scope_new_class_scope(This,class_def(C),cs(T118,ClassScope)):- ::(C,'Hdr',T119),::(T119,'Name',T118),class_def_scope(T121),::(C,'Bdy',T122),build_class(T121,ClassScope,[]),::(T121,'Constructor',T120), (T120=none;T120\=none,call(T120,ClassScope,T122,T119,This)).
 p_scope_is_top(This):- ::(This,'Top',T123),T123='true'.
-p_scope_dump(This,IO):- ::(This,'Defs',T124),::(This,get_defined_names,T125),call(T125,T124,Names),::(IO,'Out',T126),write_standard(T126,defined_names(Names)),write(T126,'.').
+p_scope_dump(This,IO):- ::(This,'Defs',T124),::(This,get_defined_names,T125),call(T125,T124,Names),::(IO,'Out',T126),write_standard(T126, (:-add_to_defined_names(Names))),write(T126,'.').
 p_scope_lookup(This,Arg,ScopeRes):- ::(This,lookup_parent,T127),call(T127,Arg,ScopeRes),'!'.
 p_scope_lookup(This,Arg,ScopeRes):- ::(This,lookup_nesting,T128),call(T128,Arg,ScopeRes).
 p_scope_lookup_here(This,Arg,This):- ::(This,'Defs',T129),member(Def,T129),::(This,get_name,T130),call(T130,Def,Arg).
@@ -106,10 +104,10 @@ p_quick(X,Extras,Opts):-atom_concat(X,'.oopl',X1),atom_concat(X,'.out.pl',X2),p_
 p_quick(X,Opts):-p_quick(X,'',Opts).
 p_quick(X):-p_quick(X,[]).
 p_generic_compile(In,Out):-p_generic_compile(In,Out,[]).
-p_generic_compile(In,Out,Opts):-p_compile(In,Out,':- [\'./standard.out.pl\'].
+p_generic_compile(In,Out,Opts):-p_compile(In,Out,':- ensure_loaded(\'./standard.out.pl\').
 ',Opts).
 p_quick_generic(In):-atom_concat(In,'.oopl',X1),atom_concat(In,'.out.pl',X2),p_generic_compile(X1,X2).
-class_def_generator(T):-class_def__classType(X),build_class(X,T,[]),::(X,'Constructor',T177), (T177=none;T177\=none,call(T177,T,generator,['Opts','TopScope','Extras','InFile','OutFile','IO','TNext'],[ (next_tmp,p_generator_next_tmp), (g_compile,p_generator_g_compile), (pair_predicate,p_generator_pair_predicate), (find_parents_definitions,p_generator_find_parents_definitions), (make_super_call,p_generator_make_super_call), (predicate_inherit,p_generator_predicate_inherit), (find_class_definitions,p_generator_find_class_definitions), (not_same_pred_name,p_generator_not_same_pred_name), (get_unique_predicates,p_generator_get_unique_predicates), (none_if_empty,p_generator_none_if_empty), (make_class,p_generator_make_class), (append_if_not_blank,p_generator_append_if_not_blank), (make_predicate_name,p_generator_make_predicate_name), (make_class_type_functor,p_generator_make_class_type_functor), (make_class_type_args,p_generator_make_class_type_args), (make_class_type_body,p_generator_make_class_type_body), (expand_new,p_generator_expand_new), (make_from_fact,p_generator_make_from_fact), (generate_defs_top,p_generator_generate_defs_top), (interp,p_generator_interp), (generate_defs,p_generator_generate_defs), (resolve_arg_new,p_generator_resolve_arg_new), (resolve_arg,p_generator_resolve_arg), (resolve_args,p_generator_resolve_args), (make_dynamic,p_generator_make_dynamic), (goal_funcs,p_generator_goal_funcs), (contin_change,p_generator_contin_change), (resolve_args_comma_functor,p_generator_resolve_args_comma_functor), (add_this,p_generator_add_this), (generate_def,p_generator_generate_def), (g_add_qoutes,p_generator_g_add_qoutes), (compile_exception,p_generator_compile_exception)],none,none,p_generator_generator)).
+class_def_generator(T):-class_def__classType(X),build_class(X,T,[]),::(X,'Constructor',T177), (T177=none;T177\=none,call(T177,T,generator,['Opts','TopScope','Extras','InFile','OutFile','IO','TNext'],[ (next_tmp,p_generator_next_tmp), (g_compile,p_generator_g_compile), (pair_predicate,p_generator_pair_predicate), (find_parents_definitions,p_generator_find_parents_definitions), (make_super_call,p_generator_make_super_call), (predicate_inherit,p_generator_predicate_inherit), (find_class_definitions,p_generator_find_class_definitions), (not_same_pred_name,p_generator_not_same_pred_name), (get_unique_predicates,p_generator_get_unique_predicates), (none_if_empty,p_generator_none_if_empty), (make_class,p_generator_make_class), (append_if_not_blank,p_generator_append_if_not_blank), (make_predicate_name,p_generator_make_predicate_name), (make_class_type_functor,p_generator_make_class_type_functor), (make_class_type_args,p_generator_make_class_type_args), (make_class_type_body,p_generator_make_class_type_body), (expand_new,p_generator_expand_new), (make_from_fact,p_generator_make_from_fact), (generate_defs_top,p_generator_generate_defs_top), (dump,p_generator_dump), (interp,p_generator_interp), (generate_defs,p_generator_generate_defs), (resolve_arg_new,p_generator_resolve_arg_new), (resolve_arg,p_generator_resolve_arg), (resolve_args,p_generator_resolve_args), (make_dynamic,p_generator_make_dynamic), (goal_funcs,p_generator_goal_funcs), (contin_change,p_generator_contin_change), (resolve_args_comma_functor,p_generator_resolve_args_comma_functor), (add_this,p_generator_add_this), (generate_def,p_generator_generate_def), (g_add_qoutes,p_generator_g_add_qoutes), (compile_exception,p_generator_compile_exception)],none,none,p_generator_generator)).
 p_generator_next_tmp(This,T):- ::(This,'TNext',T178),arg(1,T178,N),Ni is N+1,setarg(1,T178,Ni),atom_concat('T',N,T).
 p_generator_generator(This,T179,T180,T181,T182):- ::(This,'Opts',T179),::(This,'InFile',T180),::(This,'OutFile',T181),::(This,'Extras',T182),::(This,'TNext',T183),T183=cntr(0).
 p_generator_g_compile(This):- ::(This,'InFile',T184),open(T184,'read',InS),class_def_io(T186),build_class(T186,IO1,[]),::(T186,'Constructor',T185), (T185=none;T185\=none,call(T185,IO1,InS,'user_output')),class_def_parser(T188),build_class(T188,P,[]),::(T188,'Constructor',T187), (T187=none;T187\=none,call(T187,P,IO1)),::(P,'parse_until_eof',T189),call(T189,Defs),'!',close(InS),::(This,'OutFile',T190),open(T190,'write',OutS),::(This,'Extras',T191),write_standard(OutS,T191),::(This,'IO',T193),build_class(T186,T193,[]),::(T186,'Constructor',T192), (T192=none;T192\=none,call(T192,T193,'user_input',OutS)),::(This,generate_defs_top,T194),call(T194,Defs),'!',close(OutS).
@@ -140,49 +138,51 @@ p_generator_expand_new(This,Command,Con,Result):- ::(This,expand_new,T235),call(
 p_generator_expand_new(This,Command,Con,Statics,[build_class(Type,Class,Statics),::(Type,Constructor,Con), (Con='none';Con\='none',Call)]):-Command=..['new',Type,Class|Args],::(This,g_add_qoutes,T236),call(T236,'Constructor',Constructor),Call=..['call',Con,Class|Args].
 p_generator_make_from_fact(_,Nm,ArgLst,[],Res):-Res=..[Nm|ArgLst].
 p_generator_make_from_fact(_,Nm,ArgLst,Commands, (P1:-P2)):-Commands\=[],P1=..[Nm|ArgLst],list_to_comma_functor(Commands,P2).
-p_generator_generate_defs_top(This,Defs):-class_def_scope(T238),::(This,'TopScope',T239),build_class(T238,T239,[]),::(T238,'Constructor',T237), (T237=none;T237\=none,call(T237,T239,Defs)),::(This,generate_defs,T240),call(T240,Defs,T239),::(T239,'dump',T241),::(This,'IO',T242),call(T241,T242),::(This,interp,T243),call(T243).
-p_generator_interp(This):- ::(This,'Opts',T244),not(member('no_interpret',T244)),'!',::(This,'IO',T246),::(T246,'Out',T245),write_standard(T245,'
-:- [\'./interpret.pl\'].
+p_generator_generate_defs_top(This,Defs):-class_def_scope(T238),::(This,'TopScope',T239),build_class(T238,T239,[]),::(T238,'Constructor',T237), (T237=none;T237\=none,call(T237,T239,Defs)),::(This,generate_defs,T240),call(T240,Defs,T239),::(This,dump,T241),call(T241),::(This,interp,T242),call(T242).
+p_generator_dump(This):- ::(This,'Opts',T243),not(member('no_dump',T243)),'!',::(This,'TopScope',T245),::(T245,'dump',T244),::(This,'IO',T246),call(T244,T246).
+p_generator_dump(_).
+p_generator_interp(This):- ::(This,'Opts',T247),not(member('no_interpret',T247)),'!',::(This,'IO',T249),::(T249,'Out',T248),write_standard(T248,'
+:- ensure_loaded(\'./interpret.pl\').
 :- p_interpret.').
 p_generator_interp(_).
-p_generator_generate_defs(This,[Def|Defs],Scope):- ::(This,generate_def,T247),call(T247,Def,Scope),::(This,generate_defs,T248),call(T248,Defs,Scope).
+p_generator_generate_defs(This,[Def|Defs],Scope):- ::(This,generate_def,T250),call(T250,Def,Scope),::(This,generate_defs,T251),call(T251,Defs,Scope).
 p_generator_generate_defs(_,[],_).
-p_generator_resolve_arg_new(This,Scope,Reps,RepsOut,compound(P),AllCommands):-functor(P,'new',_),'!',::(This,next_tmp,T249),call(T249,Tmp),::(This,expand_new,T250),call(T250,P,tmp(Tmp),Commands),::(This,resolve_args,T251),call(T251,Scope,Reps,RepsOut,Commands,Commands1,Commands2,'false'),append(Commands2,Commands1,AllCommands).
+p_generator_resolve_arg_new(This,Scope,Reps,RepsOut,compound(P),AllCommands):-functor(P,'new',_),'!',::(This,next_tmp,T252),call(T252,Tmp),::(This,expand_new,T253),call(T253,P,tmp(Tmp),Commands),::(This,resolve_args,T254),call(T254,Scope,Reps,RepsOut,Commands,Commands1,Commands2,'false'),append(Commands2,Commands1,AllCommands).
 p_generator_resolve_arg(_,_,Reps,Reps,T,Td,[],_):-member((T,Td),Reps),'!'.
-p_generator_resolve_arg(This,Scope,Reps,Reps3,compound(Z),Tmp,Cmds4,_):-functor(Z,'::',2),arg(1,Z,X),arg(2,Z,Y),'!',::(This,next_tmp,T252),call(T252,Tmp),::(This,resolve_arg,T253),call(T253,Scope,[ (compound(Z),Tmp)|Reps],Reps2,X,Xd,Cmds1,'false'),::(This,resolve_arg,T254),call(T254,Scope,Reps2,Reps3,Y,Yd,Cmds2,'false'),append(Cmds1,Cmds2,Cmds3),append(Cmds3,[::(Xd,Yd,Tmp)],Cmds4).
-p_generator_resolve_arg(This,Scope,Reps,Reps,atom(X),P,Commands,'true'):- ::(Scope,'lookup',T255),call(T255,pred(X,0),PredScope),'!',::(PredScope,'pred_is_constructor',T256), (not(call(T256,pred(X,0)));throw('Cannot directly call a constructor.')),::(This,make_dynamic,T257),call(T257,PredScope,X,[],P,Commands).
-p_generator_resolve_arg(This,Scope,Reps,[ (atom(X),Tmp)|Reps],atom(X),Tmp,[C],_):- ::(Scope,'lookup',T258),call(T258,class(X),DefScp),'!',::(This,next_tmp,T259),call(T259,Tmp),::(This,make_class_type_functor,T260),call(T260,X,DefScp,F),::(This,add_this,T261),call(T261,[Tmp],DefScp,Ls),C=..[F|Ls].
-p_generator_resolve_arg(This,_,R,R,atom(X),Y,[],_):-'!',::(This,g_add_qoutes,T262),call(T262,X,Y).
-p_generator_resolve_arg(This,Scope,Reps,[ (var(Arg),Tmp)|Reps],var(Arg),Tmp,[::('This',ArgQ,Tmp)],_):- ::(Scope,'lookup',T263),call(T263,field(Arg),_),'!',::(This,g_add_qoutes,T264),call(T264,Arg,ArgQ),::(This,next_tmp,T265),call(T265,Tmp).
+p_generator_resolve_arg(This,Scope,Reps,Reps3,compound(Z),Tmp,Cmds4,_):-functor(Z,'::',2),arg(1,Z,X),arg(2,Z,Y),'!',::(This,next_tmp,T255),call(T255,Tmp),::(This,resolve_arg,T256),call(T256,Scope,[ (compound(Z),Tmp)|Reps],Reps2,X,Xd,Cmds1,'false'),::(This,resolve_arg,T257),call(T257,Scope,Reps2,Reps3,Y,Yd,Cmds2,'false'),append(Cmds1,Cmds2,Cmds3),append(Cmds3,[::(Xd,Yd,Tmp)],Cmds4).
+p_generator_resolve_arg(This,Scope,Reps,Reps,atom(X),P,Commands,'true'):- ::(Scope,'lookup',T258),call(T258,pred(X,0),PredScope),'!',::(PredScope,'pred_is_constructor',T259), (not(call(T259,pred(X,0)));throw('Cannot directly call a constructor.')),::(This,make_dynamic,T260),call(T260,PredScope,X,[],P,Commands).
+p_generator_resolve_arg(This,Scope,Reps,[ (atom(X),Tmp)|Reps],atom(X),Tmp,[C],_):- ::(Scope,'lookup',T261),call(T261,class(X),DefScp),'!',::(This,next_tmp,T262),call(T262,Tmp),::(This,make_class_type_functor,T263),call(T263,X,DefScp,F),::(This,add_this,T264),call(T264,[Tmp],DefScp,Ls),C=..[F|Ls].
+p_generator_resolve_arg(This,_,R,R,atom(X),Y,[],_):-'!',::(This,g_add_qoutes,T265),call(T265,X,Y).
+p_generator_resolve_arg(This,Scope,Reps,[ (var(Arg),Tmp)|Reps],var(Arg),Tmp,[::('This',ArgQ,Tmp)],_):- ::(Scope,'lookup',T266),call(T266,field(Arg),_),'!',::(This,g_add_qoutes,T267),call(T267,Arg,ArgQ),::(This,next_tmp,T268),call(T268,Tmp).
 p_generator_resolve_arg(_,_,R,R,var(Arg),Arg,[],_):-'!'.
 p_generator_resolve_arg(_,_,R,R,tmp(Arg),Arg,[],_):-'!'.
-p_generator_resolve_arg(This,Scope,Reps,RepsOut,compound(P),Pd,Commands3,'true'):-P=..[Nm|Args],length(Args,N),::(Scope,'lookup',T266),call(T266,pred(Nm,N),PredScope),'!',::(PredScope,'pred_is_constructor',T267), (not(call(T267,pred(Nm,N)));throw('Cannot directly call a constructor.')),::(This,resolve_args,T268),call(T268,Scope,Reps,RepsOut,Args,Args2,Commands,'false'),::(This,make_dynamic,T269),call(T269,PredScope,Nm,Args2,Pd,Commands2),append(Commands,Commands2,Commands3).
-p_generator_resolve_arg(This,Scope,Reps,RepsOut,compound(P),Pd,Commands,Chge):-P=..[Nm|Args],::(This,contin_change,T270),call(T270,Nm,Chge,Chge2),::(This,resolve_args,T271),call(T271,Scope,Reps,RepsOut,Args,Argsd,Commands,Chge2),Pd=..[Nm|Argsd].
-p_generator_resolve_arg(This,Scope,Reps,RepsOut,P,Pd,Commands,Chge):-functor(P,Nm,_),Nm\='compound',::(This,resolve_arg,T272),call(T272,Scope,Reps,RepsOut,compound(P),Pd,Commands,Chge).
-p_generator_resolve_args(This,Scope,Reps,RepsOut2,[Arg|Args],[NewArg|NewArgs],AllCommands,Chge):- ::(This,resolve_arg,T273),call(T273,Scope,Reps,RepsOut,Arg,NewArg,Commands,Chge),::(This,resolve_args,T274),call(T274,Scope,RepsOut,RepsOut2,Args,NewArgs,Commands2,Chge),append(Commands,Commands2,AllCommands).
+p_generator_resolve_arg(This,Scope,Reps,RepsOut,compound(P),Pd,Commands3,'true'):-P=..[Nm|Args],length(Args,N),::(Scope,'lookup',T269),call(T269,pred(Nm,N),PredScope),'!',::(PredScope,'pred_is_constructor',T270), (not(call(T270,pred(Nm,N)));throw('Cannot directly call a constructor.')),::(This,resolve_args,T271),call(T271,Scope,Reps,RepsOut,Args,Args2,Commands,'false'),::(This,make_dynamic,T272),call(T272,PredScope,Nm,Args2,Pd,Commands2),append(Commands,Commands2,Commands3).
+p_generator_resolve_arg(This,Scope,Reps,RepsOut,compound(P),Pd,Commands,Chge):-P=..[Nm|Args],::(This,contin_change,T273),call(T273,Nm,Chge,Chge2),::(This,resolve_args,T274),call(T274,Scope,Reps,RepsOut,Args,Argsd,Commands,Chge2),Pd=..[Nm|Argsd].
+p_generator_resolve_arg(This,Scope,Reps,RepsOut,P,Pd,Commands,Chge):-functor(P,Nm,_),Nm\='compound',::(This,resolve_arg,T275),call(T275,Scope,Reps,RepsOut,compound(P),Pd,Commands,Chge).
+p_generator_resolve_args(This,Scope,Reps,RepsOut2,[Arg|Args],[NewArg|NewArgs],AllCommands,Chge):- ::(This,resolve_arg,T276),call(T276,Scope,Reps,RepsOut,Arg,NewArg,Commands,Chge),::(This,resolve_args,T277),call(T277,Scope,RepsOut,RepsOut2,Args,NewArgs,Commands2,Chge),append(Commands,Commands2,AllCommands).
 p_generator_resolve_args(_,_,R,R,[],[],[],_).
-p_generator_make_dynamic(This,Scope,Nm,Args,Res,[]):- ::(Scope,'is_top',T275),call(T275),'!',::(This,make_predicate_name,T276),call(T276,pred(Nm,_),Scope,NewName),Res=..[NewName|Args].
-p_generator_make_dynamic(This,_,Nm,Args,Res,[::('This',Nm,Tmp)]):- ::(This,next_tmp,T277),call(T277,Tmp),Res=..['call',Tmp|Args].
+p_generator_make_dynamic(This,Scope,Nm,Args,Res,[]):- ::(Scope,'is_top',T278),call(T278),'!',::(This,make_predicate_name,T279),call(T279,pred(Nm,_),Scope,NewName),Res=..[NewName|Args].
+p_generator_make_dynamic(This,_,Nm,Args,Res,[::('This',Nm,Tmp)]):- ::(This,next_tmp,T280),call(T280,Tmp),Res=..['call',Tmp|Args].
 p_generator_goal_funcs(_,[',',';','not']).
 p_generator_contin_change(_,_,'false','false').
-p_generator_contin_change(This,Nm,'true','true'):- ::(This,goal_funcs,T278),call(T278,L),member(Nm,L).
-p_generator_contin_change(This,Nm,'true','false'):- ::(This,goal_funcs,T279),call(T279,L),not(member(Nm,L)).
-p_generator_resolve_args_comma_functor(This,compound(B),Scope,Reps,RepsOut2,Res):-functor(B,',',_),'!',arg(1,B,Arg),arg(2,B,Bdy),::(This,resolve_arg_new,T280),::(This,resolve_arg,T281), (call(T280,Scope,Reps,RepsOut,Arg,CommandsNew),'!',append(CommandsNew,Res1,Res);call(T281,Scope,Reps,RepsOut,Arg,NewArg,Commands1,'true'),append(Commands1,[NewArg|Res1],Res)),::(This,resolve_args_comma_functor,T282),call(T282,Bdy,Scope,RepsOut,RepsOut2,Res1).
-p_generator_resolve_args_comma_functor(This,B,Scope,Reps,RepsOut,Res):-functor(B,Nm,_),Nm\=',',::(This,resolve_arg_new,T283),::(This,resolve_arg,T284), (call(T283,Scope,Reps,RepsOut,B,Res),'!';call(T284,Scope,Reps,RepsOut,B,Bd,Commands,'true'),append(Commands,[Bd],Res)).
-p_generator_add_this(This,N,Ls,Scope,Pred,Ls2):-N>=1,::(This,add_this,T285),call(T285,Ls,Scope,Pred,Ls2).
-p_generator_add_this(_,0,Ls,Scope,Pred,Ls):- ::(Scope,'is_top',T286),::(Scope,'pred_has_mod',T287), (call(T286);call(T287,'static',Pred)),'!'.
+p_generator_contin_change(This,Nm,'true','true'):- ::(This,goal_funcs,T281),call(T281,L),member(Nm,L).
+p_generator_contin_change(This,Nm,'true','false'):- ::(This,goal_funcs,T282),call(T282,L),not(member(Nm,L)).
+p_generator_resolve_args_comma_functor(This,compound(B),Scope,Reps,RepsOut2,Res):-functor(B,',',_),'!',arg(1,B,Arg),arg(2,B,Bdy),::(This,resolve_arg_new,T283),::(This,resolve_arg,T284), (call(T283,Scope,Reps,RepsOut,Arg,CommandsNew),'!',append(CommandsNew,Res1,Res);call(T284,Scope,Reps,RepsOut,Arg,NewArg,Commands1,'true'),append(Commands1,[NewArg|Res1],Res)),::(This,resolve_args_comma_functor,T285),call(T285,Bdy,Scope,RepsOut,RepsOut2,Res1).
+p_generator_resolve_args_comma_functor(This,B,Scope,Reps,RepsOut,Res):-functor(B,Nm,_),Nm\=',',::(This,resolve_arg_new,T286),::(This,resolve_arg,T287), (call(T286,Scope,Reps,RepsOut,B,Res),'!';call(T287,Scope,Reps,RepsOut,B,Bd,Commands,'true'),append(Commands,[Bd],Res)).
+p_generator_add_this(This,N,Ls,Scope,Pred,Ls2):-N>=1,::(This,add_this,T288),call(T288,Ls,Scope,Pred,Ls2).
+p_generator_add_this(_,0,Ls,Scope,Pred,Ls):- ::(Scope,'is_top',T289),::(Scope,'pred_has_mod',T290), (call(T289);call(T290,'static',Pred)),'!'.
 p_generator_add_this(_,0,Ls,_,_,['_'|Ls]).
-p_generator_add_this(_,Ls,Scope,Pred,Ls):- ::(Scope,'is_top',T288),::(Scope,'pred_has_mod',T289), (call(T288);call(T289,'static',Pred)),'!'.
+p_generator_add_this(_,Ls,Scope,Pred,Ls):- ::(Scope,'is_top',T291),::(Scope,'pred_has_mod',T292), (call(T291);call(T292,'static',Pred)),'!'.
 p_generator_add_this(_,Ls,_,_,['This'|Ls]).
-p_generator_add_this(_,Ls,Scope,Ls):- ::(Scope,'is_top',T290),call(T290),'!'.
+p_generator_add_this(_,Ls,Scope,Ls):- ::(Scope,'is_top',T293),call(T293),'!'.
 p_generator_add_this(_,Ls,_,['This'|Ls]).
-p_generator_generate_def(This,fact(FT),Scope):- ::(FT,'Left',T291),T291=..[Nm|ArgLstIn],::(This,resolve_args,T292),call(T292,Scope,[],_,ArgLstIn,ArgLst,Commands,'false'),::(FT,'N',T293),::(This,make_predicate_name,T294),call(T294,pred(Nm,T293),Scope,NewName),count_occurences('This', (Commands,ArgLst),Ns),::(This,add_this,T295),call(T295,Ns,ArgLst,Scope,pred(Nm,T293),ArgLst2),::(This,make_from_fact,T296),call(T296,NewName,ArgLst2,Commands,Res),::(This,'IO',T298),::(T298,'Out',T297),write_standard(T297,Res),write(T297,'.
+p_generator_generate_def(This,fact(FT),Scope):- ::(FT,'Left',T294),T294=..[Nm|ArgLstIn],::(This,resolve_args,T295),call(T295,Scope,[],_,ArgLstIn,ArgLst,Commands,'false'),::(FT,'N',T296),::(This,make_predicate_name,T297),call(T297,pred(Nm,T296),Scope,NewName),count_occurences('This', (Commands,ArgLst),Ns),::(This,add_this,T298),call(T298,Ns,ArgLst,Scope,pred(Nm,T296),ArgLst2),::(This,make_from_fact,T299),call(T299,NewName,ArgLst2,Commands,Res),::(This,'IO',T301),::(T301,'Out',T300),write_standard(T300,Res),write(T300,'.
 ').
-p_generator_generate_def(This,rule(RT),Scope):- ::(RT,'Left',T299),T299=..[Nm|ArgLstIn],::(This,resolve_args,T300),call(T300,Scope,[],OutReps,ArgLstIn,ArgLst,Commands,'false'),::(RT,'Right',T301),::(This,resolve_args_comma_functor,T302),call(T302,T301,Scope,OutReps,_,Res),append(Commands,Res,Body),::(RT,'N',T303),::(This,make_predicate_name,T304),call(T304,pred(Nm,T303),Scope,NewName),count_occurences('This', (Body,ArgLst),Ns),::(This,add_this,T305),call(T305,Ns,ArgLst,Scope,pred(Nm,T303),ArgLst2),Pd=..[NewName|ArgLst2],list_to_comma_functor(Body,CBdy),::(This,'IO',T307),::(T307,'Out',T306),write_standard(T306, (Pd:-CBdy)),write(T306,'.
+p_generator_generate_def(This,rule(RT),Scope):- ::(RT,'Left',T302),T302=..[Nm|ArgLstIn],::(This,resolve_args,T303),call(T303,Scope,[],OutReps,ArgLstIn,ArgLst,Commands,'false'),::(RT,'Right',T304),::(This,resolve_args_comma_functor,T305),call(T305,T304,Scope,OutReps,_,Res),append(Commands,Res,Body),::(RT,'N',T306),::(This,make_predicate_name,T307),call(T307,pred(Nm,T306),Scope,NewName),count_occurences('This', (Body,ArgLst),Ns),::(This,add_this,T308),call(T308,Ns,ArgLst,Scope,pred(Nm,T306),ArgLst2),Pd=..[NewName|ArgLst2],list_to_comma_functor(Body,CBdy),::(This,'IO',T310),::(T310,'Out',T309),write_standard(T309, (Pd:-CBdy)),write(T309,'.
 ').
-p_generator_generate_def(This,class_def(C),Scope):- ::(Scope,'scope_of',T308),::(C,'Hdr',T310),::(T310,'Name',T309),call(T308,T309,NewScope),::(This,make_class,T311),call(T311,C,Scope,NewScope,Supers),::(C,'Bdy',T312),::(This,generate_defs,T313),call(T313,T312,NewScope),::(This,'IO',T315),::(T315,'Out',T314),write_list(T314,Supers).
-p_generator_generate_def(This,field(Nm),Scope):- ::(Scope,'is_top',T316),::(This,compile_exception,T317), (not(call(T316));call(T317,['Field \'',Nm,'\' defined outside of a class.'])).
-p_generator_g_add_qoutes(This,X,X):- ::(This,'Opts',T318),member('no_qoutes',T318),'!'.
+p_generator_generate_def(This,class_def(C),Scope):- ::(Scope,'scope_of',T311),::(C,'Hdr',T313),::(T313,'Name',T312),call(T311,T312,NewScope),::(This,make_class,T314),call(T314,C,Scope,NewScope,Supers),::(C,'Bdy',T315),::(This,generate_defs,T316),call(T316,T315,NewScope),::(This,'IO',T318),::(T318,'Out',T317),write_list(T317,Supers).
+p_generator_generate_def(This,field(Nm),Scope):- ::(Scope,'is_top',T319),::(This,compile_exception,T320), (not(call(T319));call(T320,['Field \'',Nm,'\' defined outside of a class.'])).
+p_generator_g_add_qoutes(This,X,X):- ::(This,'Opts',T321),member('no_qoutes',T321),'!'.
 p_generator_g_add_qoutes(_,X,Y):-add_qoutes(X,Y).
 p_generator_compile_exception(_,Ms):-throw_atoms(Ms).
-defined_names([class(io),class(class_header_token),class(class_token),class(clause_token),class(rule_token),class(fact_token),class(parser),pred(not_unified,2),pred(comma_list_append,3),pred(comma_list_append,3),pred(bind_vars_to_name,1),pred(bind_vars_to_name,1),class(scope),pred(compile,4),pred(quick,3),pred(quick,2),pred(quick,1),pred(generic_compile,2),pred(generic_compile,3),pred(quick_generic,1),class(generator)]).
+:-add_to_defined_names([class(io),class(class_header_token),class(class_token),class(clause_token),class(rule_token),class(fact_token),class(parser),pred(not_unified,2),pred(bind_vars_to_name,1),pred(bind_vars_to_name,1),class(scope),pred(compile,4),pred(quick,3),pred(quick,2),pred(quick,1),pred(generic_compile,2),pred(generic_compile,3),pred(quick_generic,1),class(generator)]).

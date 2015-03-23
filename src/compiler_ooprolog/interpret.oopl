@@ -56,11 +56,15 @@ class interpeter extends generator.
 		catch(This::'riwloop', Msg, Er),
 		interpret.
 
+	to_goal_list(Term, Eqs, Res) :-
+		(call(Tag, Eqs, Term, P) ; throw('Only currently allowing facts at runtime.\n')),
+		(resolve_args_comma_functor(P, Scope, [], _, Res) ; throw('Failed to interpret query')),
+		!.
+
 	riwloop :-
 		write('?-'),
 		read_term(user_input, X, [variable_names(Eqs)]),
-		(call(Tag, Eqs, X, P) ; throw('Only currently allowing facts at runtime.\n')),
-		(resolve_args_comma_functor(P, Scope, [], _, Res) ; throw('Failed to interpret query')),
+		to_goal_list(X, Eqs, Res),
 		add_functor_args(This::attempt_goal, [Res, Eqs], G),
 		add_functor_args(This::error, [Msg], Er),
 		catch(G, Msg, Er),
@@ -98,3 +102,9 @@ class interpeter extends generator.
 	write_tabs(Strm, N, E) :- N > 1, write(Strm, '	|'), Nd is N - 1, write_tabs(Strm, Nd, E).
 
 endclass.
+
+interpret_query(G) :-
+	defined_names(N),
+	new(interpeter, I, N),
+	call(I::to_goal_list, G, _, Res),
+	call_list(Res).

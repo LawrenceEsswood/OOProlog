@@ -26,7 +26,12 @@ standard_out_path(X) :- paths(build, BP), atom_concat(BP, 'standard.out.pl', X).
 load_compiler :-  file(build, 'generate.pl', G), [G], link_names.
 
 % Use the prolog based compiler to build the standard include
-build_standard :- standard_path(In), standard_out_path(Out), compile(In, Out, '', [no_munge, no_interpret]).
+build_standard :- 
+	load_compiler,
+	standard_path(In),
+	standard_out_path(Out),
+	compile(In, Out, '', [no_munge, no_interpret, no_dump]).
+
 swap_standard :- retractall(standard_path(_)), assert(standard_path('./standard/standard2.oopl')).
 
 % Build the nth test code
@@ -62,6 +67,7 @@ build_from_ooprolog :-
 build_interpret :-
 	file(oopl, 'interpret.oopl', InPath),
 	file(build, 'interpret.pl', OutPath),
+	load_compiler,
 	generic_compile(InPath, OutPath, [no_interpret]).
 
 copy_from_tmp :- copy_file_from_dir(tmp, build, 'generate.pl').

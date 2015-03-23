@@ -41,7 +41,7 @@ class scope.
 
 	dump(IO) :-
 		get_defined_names(Defs, Names),
-		write_standard(IO::'Out', defined_names(Names)),
+		write_standard(IO::'Out', :- add_to_defined_names(Names)),
 		write(IO::'Out', '.').
 
 	% looks up a name to get its containing scope, FIXME wrong way round
@@ -125,7 +125,7 @@ generic_compile(In, Out) :- generic_compile(In, Out, []).
 
 % Compile with the standard heading
 generic_compile(In, Out, Opts) :- compile(In, Out,
-':- [''./standard.out.pl''].
+':- ensure_loaded(''./standard.out.pl'').
 ', Opts).
 
 quick_generic(In) :- atom_concat(In, '.oopl', X1), atom_concat(In, '.out.pl', X2), generic_compile(X1, X2).
@@ -265,11 +265,15 @@ class generator.
 	%Walks the parse tree finding out names to create scope
 
 	% Top level predicate for generating prolog
-	generate_defs_top(Defs) :- new(scope, TopScope, Defs), generate_defs(Defs, TopScope), call(TopScope::dump, IO), interp.
+	generate_defs_top(Defs) :- new(scope, TopScope, Defs), generate_defs(Defs, TopScope), dump, interp.
+
+	dump :- not(member('no_dump',Opts)), !,
+		call(TopScope::dump, IO).
+	dump.
 
 	interp :- not(member('no_interpret',Opts)), !,
-			write_standard(IO::'Out', '
-:- [''./interpret.pl''].
+			write_standard(IO::'Out','
+:- ensure_loaded(''./interpret.pl'').
 :- p_interpret.').
 	interp.
 

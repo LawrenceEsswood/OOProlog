@@ -54,3 +54,11 @@ class classType.
 
 endclass.
 */
+
+add_to_defined_names(NewNames) :-
+	current_predicate(defined_names/1),
+	defined_names(OldNames), !,
+	union(NewNames, OldNames, Names),
+	retract(defined_names(OldNames)),
+	assert(defined_names(Names)).
+add_to_defined_names(NewNames) :- assert(defined_names(NewNames)).
