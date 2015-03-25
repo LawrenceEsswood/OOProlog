@@ -26,6 +26,7 @@ build_class(Type, C, ExtraMembers) :-
 ::(C, Nm, Res, _) :- ::(C, Nm, Res).
 
 object(class(_,_)).
+classof(class(self,M), class(self,M)) :- !.
 classof(class(T,_),T).
 
 construct_classType(This, N, F, Pred, Par, Out, Cons) :- 
@@ -36,10 +37,10 @@ construct_classType(This, N, F, Pred, Par, Out, Cons) :-
 	::(This, 'Outer', Out, 5),
 	::(This, 'Constructor', Cons, 6).
 
-class_def__classType(X) :- X = class(X, Dict),
+class_def__classType(class(self, Dict),
 	pairs_keys_values(Pairs, ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor'],
 		[classType, ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor'], [], none, none, construct_classType]),
-	dict_pairs(Dict, members, Pairs).
+	dict_pairs(Dict, members, Pairs)).
 
 
 /*
