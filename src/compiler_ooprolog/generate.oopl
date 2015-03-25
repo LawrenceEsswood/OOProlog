@@ -111,7 +111,7 @@ endclass.
 	% Compiler %
 	%%%%%%%%%%%%
 
-compile(In, Out, Extras, Opts) :- new(generator, G, Opts, In, Out, Extras), call(G::g_compile).
+compile(In, Out, Extras, Opts) :- new(generator, G, Opts, In, Out, Extras), call(G::g_compile), !.
 
 % An oopl file with name X, outputs it to X.out.pl
 quick(X, Extras, Opts) :- atom_concat(X, '.oopl', X1), atom_concat(X, '.out.pl', X2), compile(X1, X2, Extras, Opts).
@@ -252,7 +252,7 @@ class generator.
 		list_to_comma_functor([class_def__classType('X') | NewComs], Bdy).
 
 	expand_new(Command, Con, Result) :- expand_new(Command, Con, [], Result).
-	expand_new(Command, Con, Statics, [build_class(Type, Class, Statics), ::(Type, Constructor, Con) , ((Con = none) ; (Con \= none , Call))]) :- 
+	expand_new(Command, Con, Statics, [build_class(Type, Class, Statics), ::(Type, Constructor, Con) , (((Con \= none) *-> Call;true))]) :- 
 		Command =.. [new, Type, Class | Args],
 		g_add_qoutes('Constructor', Constructor),
 		Call =.. [call, Con, Class | Args].
