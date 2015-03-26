@@ -3,6 +3,7 @@
 times(100).
 entries([
 			(p_baseline, baseline),
+			(p_type_only, type),
 			(p_create_c1, 1),
 			(p_create_c2, 2),
 			(p_create_c3, 4),
@@ -17,6 +18,7 @@ entries([
 		]).
 
 baseline(_).
+type_only(c1).
 create_c1(X) :- new(c1, X).
 create_c2(X) :- new(c2, X).
 create_c3(X) :- new(c3, X).

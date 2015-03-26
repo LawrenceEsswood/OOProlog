@@ -2,6 +2,7 @@ times(1000000).
 
 entries([
 			(p_baseline, baseline),
+			(p_baseline2, baseline2),
 			(p_access_test(C1), 1),
 			(p_access_test(C2), 2),
 			(p_access_test(C3), 4),
@@ -30,5 +31,8 @@ entries([
 foo(bar).
 baseline :- foo(bar).
 access_test(C) :- call(C::'foo', bar).
+
+baseline2 :- call(p_foo, bar).
+
 
 :- oopl_include('./objects.oopl').

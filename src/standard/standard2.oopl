@@ -1,47 +1,69 @@
-split_tupples([],[],[]).
-split_tupples([(X,Y)|Z],[X|Xs],[Y|Ys]) :- split_tupples(Z, Xs, Ys).
+:- oopl_include('./standard/hash.pl').
+add(T, H, H) :- add(H, T).
 
-expand_predicate(This,(Name, Predicate), (Name, F)) :- F =.. [Predicate, This].
+make_fresh_field(Field, Dict, Dict) :- add(Dict, (Field, _)).
 
 build_class(Type, C) :- build_class(Type, C, []).
 
-build_class(Type, C, ExtraMembers) :-
+build_class(Type, C, _) :-
 	C = class(Type, Members),
+	table_size(Type::'Name', Type::'Fields', N),
+	hashtable(N, Members),
+	foldl(make_fresh_field, Type::'Fields', Members, _),
+	!.
 
-	maplist(expand_predicate(C), Type::'Predicates', PrTup),
-	split_tupples(PrTup, K, V),
-	pairs_keys_values(Predicates, K, V),
+table_size(classType, _, 8).
+table_size(_, F, N) :- length(F, LF), N is LF * 3.
 
-	pairs_keys_values(Fields, Type::'Fields', _),
-	append(Fields, Predicates, MembersLs),
-
-	split_tupples(ExtraMembers, EK, EV),
-	pairs_keys_values(Ex, EK, EV),
-	append(MembersLs, Ex, AllMembers),
-
-	dict_pairs(Members, members, AllMembers).
-
-::(class(_,M), Nm, Res) :- Res = M.Nm.
-%Backwards compat
+% Member is a field
+::(O, Nm, Res) :- access_field(O, Nm, Res).
+% Member is a predicate
+::(O, Nm, Res) :- access_predicate(O, Nm, Res).
+%For efficinecy if we can fix location at compile time we skip the hash
+::(class(_,hashtable(_,Table)), Nm, Res, N) :- arg(N, Table, (Nm, Res)), !.
 ::(C, Nm, Res, _) :- ::(C, Nm, Res).
+
+access_field(class(_,M), Nm, Res) :- lookup(M, (Nm, Res)).
+access_predicate(O, Nm, Res) :- classof(O, C), access_field(C, 'Predicates', AllPreds), lookup(AllPreds, (Nm, P)), Res =.. [P, O].
 
 object(class(_,_)).
 classof(class(self,M), class(self,M)) :- !.
 classof(class(T,_),T).
 
+%WORKS FOR TABLE OF SIZE 8, only for the correct endieness (SWIPL sucks)
 construct_classType(This, N, F, Pred, Par, Out, Cons) :- 
-	::(This, 'Name', N, 1),
-	::(This, 'Fields', F, 2),
-	::(This, 'Predicates', Pred, 3),
-	::(This, 'Parent', Par, 4), 
-	::(This, 'Outer', Out, 5),
-	::(This, 'Constructor', Cons, 6).
+	::(This, 'Name', N, 3),
+	::(This, 'Fields', F, 1),
+	length(Pred, NP),
+	Size is  NP * 3,
+	hashtable(Size, Table),
+	foldl(add, Pred, Table, _),
+	::(This, 'Predicates', Table, 4),
 
-class_def__classType(class(self, Dict),
-	pairs_keys_values(Pairs, ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor'],
-		[classType, ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor'], [], none, none, construct_classType]),
-	dict_pairs(Dict, members, Pairs)).
+	::(This, 'Parent', Par, 5), 
+	::(This, 'Outer', Out, 2),
+	::(This, 'Constructor', Cons, 7).
 
+
+class_def__classType(T) :- nb_getval(classType, T).
+
+class_def_construct_classType(
+		class(	self,
+				hashtable(8,
+					table(	('Fields', ['Name', 'Fields', 'Predicates', 'Parent', 'Outer', 'Constructor']),
+							('Outer', none),
+							('Name',classType),
+							('Predicates',hashtable(0,table)),
+							('Parent', none),
+							(_,_),
+							('Constructor',construct_classType),
+							(_,_)
+						)
+				)
+			)
+	).
+	
+:- class_def_construct_classType(T), nb_setval(classType, T).
 
 /*
 class classType.

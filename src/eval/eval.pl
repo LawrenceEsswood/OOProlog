@@ -43,13 +43,13 @@ time_bin_pl(Data, N, Res) :-
 	foldl(insert_element, Data, Heap, FullHeap),
 	extract_n_pl(N, FullHeap, [], Res).
 
-insert_oopl(Element, Heap,Heap2) :- p_insert_element(Element, Heap, Heap2).
+insert_oopl(Element, Heap, Heap2) :- p_insert_element(Element, Heap, Heap2), !.
 time_bin_oopl(Data, N, Res) :-
 	p_new_heap(N, Heap),
 	foldl(insert_oopl, Data, Heap, FullHeap),
 	extract_n_oopl(N, FullHeap, [], Res).
 
-test_heaps :- N = 1000000,
+test_heaps :- N = 1 000 000,
 	gen_data(N, Data),
 	['../../build/generate.pl'],
 	p_generic_compile('./binheap.oopl', './binheap.out.pl', [no_interpret]),
@@ -58,8 +58,8 @@ test_heaps :- N = 1000000,
 	write(T2), write('\n'),
 	time_over_n(time_bin_pl(Data, N, _), 1, T1),
 	write(T1), write('\n'),
-	time_over_n(time_bin_lt(Data, N, _), 1, T3),
-	write(T3), write('\n'),
+	%time_over_n(time_bin_lt(Data, N, _), 1, T3),
+	%write(T3), write('\n'),
 	write('done!').
 	%%%%%%%%%%%%%%%%%%%%%%%%
 	% Generic Bench Stuffs %

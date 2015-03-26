@@ -223,14 +223,24 @@ class generator.
 		get_unique_predicates(StaticsPaired, UStaticsPaired),
 
 		make_class_type_functor(Def::'Hdr'::'Name', ScopeAbove, Func),
+		make_class_type_constructor_functor(Def::'Hdr'::'Name', ScopeAbove, CFunc),
 		make_class_type_args(ScopeAbove, Args),
 
 		call(Scope::get_constructors, Constructors),
 		none_if_empty(Scope, Constructors, Constructor),
 
-		make_class_type_body(Def::'Hdr'::'Name', Fields, UPredicates, Bdy, Constructor, UStaticsPaired),
-		P =.. [Func | Args],
-		write_standard(IO::'Out', (P :- Bdy)), write(IO::'Out', '.\n').
+		make_class_type_constructor(Def::'Hdr'::'Name', Fields, UPredicates, CBdy, Constructor, UStaticsPaired),
+
+		PT =.. [Func | Args],
+		PC =.. [CFunc | Args],
+		list_to_comma_functor([PC, nb_setval(Def::'Hdr'::'Name', 'T')], Cache),
+
+		write_standard(IO::'Out', (PT :- nb_getval(Def::'Hdr'::'Name', 'T'))),
+		write(IO::'Out', '.\n'),
+		write_standard(IO::'Out', (PC :- CBdy)),
+		write(IO::'Out', '.\n'),
+		write_standard(IO::'Out', (:- Cache)),
+		write(IO::'Out', '.\n').
 
 	% The name of a predicate after generation
 	append_if_not_blank(Prefix, PredicateName, Result) :- Prefix \= '', atomic_list_concat(['p',Prefix, PredicateName], Result).
@@ -242,10 +252,14 @@ class generator.
 
 	% The name of the rule for getting a classes type info
 	make_class_type_functor(ClassName, Scope, Result) :- atomic_list_concat([class_def, Scope::'Prefix', ClassName], Result).
+
+	% The name for the rule that calls the constructor for caching
+	make_class_type_constructor_functor(ClassName, Scope, Result) :- atomic_list_concat([class_def_construct_, Scope::'Prefix', ClassName], Result).
+
 	% The compound the represents a class type 
 	make_class_type_args(Scope, Bdy) :- add_this(['T'], Scope, Bdy).
 	% Easier to just use new
-	make_class_type_body(Name, Fields, Predicates, Bdy, Constructor, Statics) :- 
+	make_class_type_constructor(Name, Fields, Predicates, Bdy, Constructor, Statics) :- 
 		maplist(This::g_add_qoutes, Fields, QFields),
 		next_tmp(T),
 		expand_new(new('X', 'T', Name, QFields, Predicates, none, none, Constructor), T, Statics, NewComs),

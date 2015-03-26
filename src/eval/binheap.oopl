@@ -31,7 +31,7 @@ class binary_heap.
 	bubble_up(_).
 
 	sift_down(0) :- !.
-	sift_down(X) :- X \= 0, arg(X, H, T), setarg(1, H, T), sift_down(X, 1).
+	sift_down(X) :- X \= 0, arg(X, H, T), setarg(1, H, T), !, sift_down(X, 1).
 
 	sift_down(Lim, X) :- TwoX is 2 * X, TwoX >= Lim, !.
 	sift_down(Lim, X) :- LimD is Lim-1, LimD is 2 * X, (not(less(LimD, X)) ; swap(LimD, X)), !.
