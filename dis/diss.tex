@@ -6,10 +6,19 @@
 \usepackage{verbatim}
 \usepackage{docmute}   % only needed to allow inclusion of proposal.tex
 \usepackage{syntax}
+\usepackage{color}
 \usepackage{listings}
 \usepackage{bussproofs}
 \usepackage{tikz}
 \usepackage[shellescape,latex]{gmp}
+\usepackage{mathtools}
+\usepackage{framed}
+\usepackage{epstopdf}
+\usepackage{mdframed}
+\usepackage{changepage}
+\usepackage{url}
+\usepackage{pdfpages}
+
 \usempxclass{article}
 \usetikzlibrary{matrix}
 \usempxclass{article}
@@ -100,6 +109,10 @@
 
 \bibliographystyle{plain}
 
+\lstset{language=Prolog}
+\lstset{showstringspaces=false}
+\lstset{basicstyle=\tt}
+ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Title
 
@@ -146,7 +159,7 @@ The aims of the project were to produce a bootstrapping compiler that takes an O
 
 \section*{Work Completed}
 
-A variant of Prolog, OOPL, was devised. A compiler, interpreter and runtime for OOPL were implemented, all in the OOPL language. The compiler supports the definition of classes with fields, predicates and an optional parent class, but not multiple inheritance. Classes inherit fields and predicates from parent classes, fields can be pattern matched like Prolog variables, and predicates with the same name can be defined in multiple classes without conflict.
+A variant of Prolog, OOPL, was devised. A compiler, interpreter and runtime for OOPL were implemented, all in the OOPL language. The compiler supports the definition of classes with fields, predicates and an optional parent class, but not multiple inheritance. Classes inherit fields and predicates from parent classes, fields can be pattern-matched like Prolog variables, and predicates with the same name can be defined in multiple classes without conflict.
 
 \section*{Special Difficulties}
 
@@ -162,10 +175,10 @@ does not contain material that has already been used to any substantial
 extent for a comparable purpose.
 
 \bigskip
-\leftline{Signed [signature]}
+\leftline{Signed }
 
 \medskip
-\leftline{Date [date]}
+\leftline{Date }
 
 \tableofcontents
 
@@ -174,7 +187,7 @@ extent for a comparable purpose.
 \newpage
 \section*{Acknowledgements}
 
-TODO
+Many thanks to Alan Mycroft, for his advice and guidance during the course of this project, John Fawcett for teaching me the past few years, and Tom Rees for repeatedly reading this document.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % now for the chapters
@@ -185,7 +198,7 @@ TODO
 
 \section{Background and Motivation}
 
-The aim of modern programing languages is to provide programmers with powerful abstractions that allow complicated algorithms and structures to be implemented with maximum efficiency and minimal errors. Compilers provide the mechanism for translating between languages and are a necessity to bridge the gap between the high-level languages used by programmers and the languages our machines are designed to run. Furthermore, compilers can perform transformations that, while retaining semantic behavior, produce smaller, more efficient, or otherwise more desirable output. As such compilers continue to be a large, active area of research.
+The aim of modern programing languages is to provide programmers with powerful abstractions that allow complicated algorithms and structures to be implemented with maximum efficiency and minimal errors. Compilers provide the mechanism for translating between languages and are a necessity to bridge the gap between the high-level languages used by programmers and the languages our machines are designed to run. Furthermore, compilers can perform transformations that, while retaining semantic behaviour, produce smaller, more efficient, or otherwise more desirable output. As such compilers continue to be a large, active area of research.
 
 \bigskip
 
@@ -214,25 +227,25 @@ class vector.
 		new(vector, V3, X3, Y3).
 		
 	% A magnitude predicate. %
-	magnitude(Mod) :- Mod is sqrt((X * X) + (Y * Y)). 
+	magnitude(M) :- M is sqrt((X * X) + (Y * Y)). 
 endclass.
 \end{lstlisting}
 
 \section{Related Work}
 
-Extending existing languages with Object-Oriented features is nothing new, in fact one of the most historically popular languages C++ was first envisioned as a `C with Classes'\cite{CPP}. There have also been several previous successful attempts to extend the Prolog language with object oriented-concepts.
+Extending existing languages with Object-Oriented features is nothing new, in fact one of the most historically popular languages ,C++, was first envisioned as a `C with Classes'\cite{CPP}. There have also been several previous successful attempts to extend the Prolog language with object oriented-concepts:
 
 \bigskip
 
-SCOOP\cite{SCOOP}  takes the same approach of class-based inheritance as OOPL. SCOOP takes its insipritation for OOP from Simula67 and uses very conventional OOP syntax and behaviour for global behaviour and also uses unification and backtracking for local behaviour. Rather than explictly providing fields, assert and retract predicates are used to provide state.
+One of these attempts, SCOOP\cite{SCOOP},  takes the same approach of class-based inheritance as OOPL\@. SCOOP takes its inspiration for OOP from Simula67 and uses very conventional OOP syntax for global behaviour, while using unification and backtracking for local behaviour. Rather than explicitly providing fields, assert and retract predicates are used to provide state.
 
 \bigskip
 
-Logtalk\cite{LOGTALK} provides a more fleshed out implementation, providing both class-based and prototype-based systems, multiple inheritance. It also uses assert and retract statements to provide mutable state to objects. 
+Logtalk\cite{LOGTALK} provides a more fleshed out implementation, providing both class-based and prototype-based systems, and multiple inheritance. It also uses assert and retract predicates to provide mutable state to objects. 
 
 \bigskip
 
-My implementation takes a different approach to providing state by way of explicit fields, which are similar to variables in that they can be used for pattern matching and unification is used for instantiation. This maintains the behavior of Prolog while still providing a syntactic method for declaring state other than predicates. Also the mechanism for inheritance differs from most OOP languages to make objects behave more like the Prolog language, more detail is given in preparation chapter. The motivation to taking this direction was to merge OOP concepts with Prolog, rather than create an extension that operates in a different manner.
+My implementation takes a different approach to providing state by way of explicit fields, which are similar to variables in that they can be used for pattern-matching and unification is used for instantiation. This maintains the behaviour of Prolog while still providing a syntactic method for declaring state other than predicates. Also the mechanism for inheritance differs from most OOP languages in that overriding extends behaviour, this is similar to how Prolog allows multiple clauses with the same name, more detail is given in preparation chapter. The motivation for taking this direction was to merge OOP concepts with Prolog, rather than create an extension that operates in a different manner.
 
 \chapter{Preparation}
 
@@ -243,8 +256,8 @@ This section covers the planning sections of the project and the development met
 While studying the tripos course I have been introduced to both object-oriented programing and basic Prolog programing. Furthermore I have taken two compilers courses and undertaken some summer reading on compilers, namely `Aho, Sethi, Ullman'\cite{DRAGON}.
 
 \section {Language Design}
-
-Although the focus of the project was the creation of the compiler the choice was made to design a unique extension to the language rather than copy existing implementations such as SCOOP, SICStus and Logtalk. This choice was made as it was interesting to explore different options and design decisions and compare results. The choice was made to provide class-based as opposed to prototype-based objects as it leave the way open for better static analysis. The OOPL language is an extension to Prolog, as such every Prolog program is still valid in OOPL. Below a simple introduction to the syntax and semantics of Prolog is given, and the extensions that have been added to create OOPL.
+\label{sec:lang}
+Although the focus of the project was to create a compiler, the choice was made to design a novel extension to Prolog rather than copy existing implementations such as SCOOP, SICStus and Logtalk. This choice was made as it was interesting to explore different options and design decisions and compare results. The choice was made to provide class-based as opposed to prototype-based objects as it leave the way open for better static analysis. My OOPL language is an extension to Prolog, as such every Prolog program is still valid in OOPL. Below a simple introduction to the syntax and semantics of Prolog is given, and the extensions that have been added to create OOPL.
 
 \subsection {Syntax}
 
@@ -266,7 +279,7 @@ The abstract syntax of a language is most readily described as a context free-gr
 
 \end{grammar}		
 
-A Prolog program consists of number of clauses. We normally split these into two categories, a clause with an empty body is a \emph{fact}, otherwise we call it \emph{rule}. We normally emit writing the `:-' for facts. A query is used to begin execution of a Prolog program, execution is covered in the semantics section.
+A Prolog program consists of number of clauses. We normally split these into two categories, a clause with an empty body is a \emph{fact}, otherwise we call it \emph{rule}. We normally omit writing the `:-' for facts. A query is used to begin execution of a Prolog program, execution is covered in the semantics section.
 
 \begin{grammar}	
 				
@@ -275,11 +288,11 @@ A Prolog program consists of number of clauses. We normally split these into two
 
 \end{grammar}
 
-Prolog has 3 types of term,  $<$term$>$ in the abstract syntax. Atoms are a particular form of ground term, they are alphanumeric and must either start with a lower case letter or be quoted. A Compound is composed of an atom called a \emph{functor} and a number of arguments which are again terms. The number of arguments is known as the compounds \emph{arity}. Atoms are treated as compounds of arity zero, and hence are not mentioned separately. Variables, $<$variable$>$, are placeholders for arbitrary terms, they are also alphanumeric and must start with either a capital letter or underscore.
+Prolog has 3 types of term, $\langle$term$\rangle$ in the abstract syntax. Atoms are a particular form of ground term, they are alphanumeric and must either start with a lower case letter or be quoted. A Compound is composed of an atom called a \emph{functor} and a number of arguments which are again terms. The number of arguments is known as the compounds \emph{arity}. Atoms are treated as compounds of arity zero, and hence are not mentioned separately. Variables, $\langle$variable$\rangle$, are placeholders for arbitrary terms, they are also alphanumeric and must start with either a capital letter or underscore.
 
 \bigskip
 
-To introduce the additional syntax of OOPL we have all of the productions above as well as the following:
+To introduce the additional syntax of OOPL we add the following:
 
 \begin{grammar}
 <def> ::= <field>
@@ -309,15 +322,27 @@ Classes are named in the same way as atoms and can optionally extend some number
 <infix> ::= `::'
 \end{grammar}
 
-We introduce a functor called \emph{new} and a macro \emph{::} that is written infix. The first is used to construct objects, the second to access their members. The detailed semantics of these two operators are discussed below.
+We introduce a functor called \emph{new} and a macro \emph{::} that is written infix. The first is used to construct objects, the second to access their members. The detailed semantics of these two operators are given below.
 
 \subsection {Semantics}
 
 Provided here is an informal introduction to the semantics of Prolog as well as the new features added and how they change the semantics.
 
+\subsubsection {Predicate Description Notation}
+
+Throughout this document predicates and their arguments will be given with a standard notation. Firstly the notation `P/n' means a predicate that has a name `P' and `n' arguments. If the arguments are named, then each will preceded by a symbol with the following meaning attached (This is taken from the SWI-Prolog documentation\cite{SWIDOC}, Chapter 4.1):
+
+\begin{itemize}
+	\item + Argument must be fully instantiated to a term that satisfies the required argument type. Think of the argument as input.
+	\item - Argument must be unbound. Think of the argument as output. 
+	\item ? Argument must be bound to a partial term of the indicated type. Note that a variable is a partial term for any type. Think of the argument as either input or output or both input and output.
+\end{itemize}
+
+Note that inputs need not be ground terms, and it is perfectly acceptable to provide a bound term as an output to check for a particular result.
+
 \subsubsection {Prolog}
 
-A Prolog program, \emph{P}, is a number of Horn clauses ( $<$clause$>$ in the syntax), a subset of first-order predicate logic. The clauses define a set of axioms within a closed universe. A clause of the form $a$ :- $b_1, b_2, ..., b_n$ should be seen as the logical implication $a \leftarrow b_1 \land b_2 \land ... \land b_n$. 
+A Prolog program, \emph{P}, is a number of Horn clauses ( $\langle$clause$\rangle$ in the syntax), a subset of first-order predicate logic. The clauses define a set of axioms within a closed universe. A clause of the form $a$ :- $\vec{b}$, where $\vec{b}$ = $b_1, b_2, ..., b_n$, should be seen as the logical implication $a \leftarrow b_1 \land b_2 \land ... \land b_n$. 
 
 \bigskip
 
@@ -325,64 +350,64 @@ Unification of terms is a very important concept in Prolog as execution is perfo
 
 \begin{itemize}
 	\item A Variable unifies with any other term\footnote{If the occurs check is turned on, unification will fail if the variable appears as a subterm in the term you attempt you unify with.}.
- 	\item A Compound unifies with another Compound if and only if they have the same functor, arity, and their arguments can be pairwise recursively unified.
+ 	\item A Compound unifies with another Compound if and only if they have the same functor and arity, and their arguments can be pairwise recursively unified.
 \end{itemize}
 
 We will define a function, MGU(X, Y), which returns the most general unifier of terms X and Y, or fails if they do not unify.
 
 \bigskip
 
-Users start the execution of a program by submitting a single goal, known as a query, which is of the form ?-q $ = (q_1 \land ... \land q_n)$. Prolog attempts to find some way to satisfy the query, returning the substitutions it makes as a result, otherwise it fails. The strategy Prolog employs is called SLD resolution and works on the premise of attempting to refute the negation of the query. A depth-first left-right search over the axioms of the program is the strategy employed by most Prolog interpreters for efficiency reasons. This is only weakly complete, that is if it terminates then it is complete, but non-termination may occur even when a refutation exists. From this we can infer the following operational semantics based on those given by Mycroft and Jones\cite{MYCROFT}.
+Users start the execution of a program by submitting a single goal, known as a query, which is of the form ?-q $ = (q_1 \land ... \land q_n)$. Prolog attempts to find some way to satisfy the query, returning the substitutions it makes as a result, otherwise it fails. The strategy Prolog employs is called SLD resolution and works on the premise of attempting to refute the negation of the query. A depth-first left-right search over the axioms of the program is the strategy employed by most Prolog interpreters for efficiency reasons. This is only weakly complete, that is if it terminates then it is complete, but non-termination may occur even when a refutation exists. From this we can obtain the following operational semantics based on those given by Mycroft and Jones\cite{MYCROFT}.
 
 \bigskip
 
-We use a stack not to record function calls but to keep track of state so that we can backtrack if necessary. Each element on the stack is formed of a 3-tuple. The first is a conjunction of as-yet-unsatisfied goals, the second is the total of the substitutions performed so far, and the third is the remaining clauses. We start with a stack with a single element containing the list of goals that is the query, \emph{g}, the identify substitution, \emph{ID}, and the entire program, \emph{P}, as the set of available clauses to apply. The Start State:
+We use a stack not to record function calls but to keep track of state so that we can backtrack if necessary. Each element on the stack is formed of a 3-tuple. The first is a conjunction of as-yet-unsatisfied goals, the second is the composition of all the MGU substitution functions so far, and the third is the remaining clauses we can try to apply. We start with a stack with a single element containing the list of goals that is the query, \emph{g}, the identify substitution, \emph{ID}, and the entire program, \emph{P}, as the set of available clauses to apply. The Start State:
 
 \bigskip
 
-StartState = (q, ID, P) : []
+StartState = (q, ID, P) : [\,]
 
 \bigskip
 
-I have used colon for cons, to avoid confusion with the :: operator defined later. The `@' symbol is used below to refer to list append, and `[]' is the empty list. The transition relation, \emph{$\to$} between states is described below:
+I have used colon for cons, to avoid confusion with the :: operator defined later. The `@' symbol is used below to refer to list append, and `[\,]' is the empty list. The transition relation, \emph{$\to$} between states is described below:
 
 \begin{prooftree}
 \AXC{}
-\RightLabel{where $\theta$ = MGU(a, a')}
+\RightLabel{where $\theta = MGU(a, a')$}
 \LeftLabel{(apply clause)}
-\UIC{(a : b, $\phi$, (a' $\leftarrow$ b')\footnotemark : C) : stack $\to$ }
+\UIC{($a : \vec{b}, \phi, (a' \leftarrow \vec{b}'): C) : stack \to$ }
 	\noLine
-\UIC{($\theta$(b') @ $\theta$(b), $\theta\circ\phi$, P) :  (a : b,  $\phi$, C) : stack}
+\UIC{($\theta(\vec{b}') @ \theta(\vec{b}), \theta\circ\phi, P) :  (a : \vec{b},  \phi, C) : stack$}
 \end{prooftree}
-This is the case where the current clause under consideration unifies with the left-most goal. We pop off the top element on the stack and replace it with two more: a backtracking point for later and an element where the clause was applied.
-\footnotetext{This is a clause with all variables renamed to be fresh}
+This is the case where the current clause\footnotemark\,under consideration unifies with the left-most goal. We pop off the top element on the stack and replace it with two more: a backtracking point in case we fail later on later, and an element where the clause has been successfully applied.
+\footnotetext{Technically $a\leftarrow\vec{b}$ is renamed apart to use fresh variables.}
 \begin{prooftree}
 \AXC{}
-\RightLabel{where MGU(a, a') fails}
+\RightLabel{where $MGU(a, a')$ fails}
 \LeftLabel{(clause does not unify)}
-\UIC{(a : b, $\phi$, (a' $\leftarrow$ b') : C) : stack $\to$}
+\UIC{($a : \vec{b}, \phi, (a' \leftarrow \vec{b}') : C) : stack \to$}
 \noLine
-\UIC{(a : b, $\phi$, C) : stack}
+\UIC{$(a : \vec{b}, \phi, C) : stack$}
 \end{prooftree}
 If we cannot apply the current clause we remove it from the list and continue on.
 \begin{prooftree}
 \AXC{}
 \LeftLabel{(backtrack)}
-\UIC{(g, $\phi$, []) :: stack $\to$ stack}
+\UIC{$(g, \phi, [\,]) : stack \to stack$}
 \end{prooftree}
 If there are no more clauses left to try we backtrack by popping an element off the stack.
 \begin{prooftree}
 \AXC{}
 \LeftLabel{(fail)}
-\UIC{[] $\to$ fail}
+\UIC{[\,] $\xrightarrow{fail}$ [\,]}
 \end{prooftree}
-If we reach the bottom of the stack then there are no more ways to satisfy the query, and we fail.
+If we reach the bottom of the stack then there are no more ways to satisfy the query, and we fail and execution stops.
 \begin{prooftree}
 \AXC{}
 \LeftLabel{(output)}
-\UIC{([],  $\phi$, C) : stack $\to$ true,  $\phi$}
+\UIC{([\,],  $\phi$, C) : stack $\xrightarrow{true, \phi}$ stack}
 \end{prooftree}	
-If ever reach a state no goals remaining, we have found a solution. We output the final substitutions that apply to the original variables in the query as the result. At this point we can also forcibly backtrack, finding all the remaining (potentially infinite in number) solutions. 
+If ever reach a state no goals remaining, we have found a solution. We output the final substitutions that apply to the original variables in the query as the result. At this point we can also forcibly backtrack, finding all the remaining (potentially infinite in number) solutions.
 
 \bigskip
 
@@ -390,11 +415,11 @@ There is also a special operator `!' in Prolog called a cut. When Prolog encount
 
 \bigskip
 
-These semantics were extended to add classes. The details of each new feature is given below.
+The above semantics were extended to add classes. The details of each new feature is given below.
 
 \subsubsection {Objects}
 
-Objects are a new type of Prolog term, distinct from atoms, compounds, and variables. They are always instances of a particular class created using the \emph{new} syntax (see later). To update the semantics, we change the MGU function above such that we also include the following rules for unification:
+Objects are a new form of Prolog term, distinct from atoms, compounds, and variables. They are always instances of a particular class created using the \emph{new} syntax (see later). To update the semantics, we change the MGU function above such that we also include the following rules for unification:
 
 \begin{itemize}
 	\item A Variable and an Object can always be unified.
@@ -404,7 +429,7 @@ Objects are a new type of Prolog term, distinct from atoms, compounds, and varia
 
 \subsubsection {Classes}
 
-A class gives a description of an object and lists the fields an object will have as well as the concrete implementation of its member predicates. Within the class any predicate with the same name as the class is given special meaning as a \emph{Constructor}. Constructors cannot be used as goals directly, doing so will produce a compile time error. Instead constructors are implicit goals when the \emph{new} predicate is applied, see below.
+A class gives a description of an object and lists the fields an object will have as well as the concrete implementation of its member predicates. Within the class any predicate with the same name as the class is given special meaning as a \emph{Constructor}. Constructors cannot be used as goals directly, doing so will produce a compile-time error. Instead constructors are implicit goals when the \emph{new} predicate is applied, see below.
 
 \bigskip
 
@@ -427,7 +452,7 @@ Notice in the above example an atom \emph{a} was used to refer to the class when
 
 \subsubsection {Inheritance}
 
-Inheritance allows a child class to inherit all the fields and predicates of a parent class. In most object-oriented languages redefining a virtual method (the equivalent of a predicate in OOPL) in a child that is also present in the parent class will \emph{override} behavior. Selecting which method to use at runtime is known as dynamic dispatch. In OOPL all predicates within classes are by default virtual, however with one crucial difference in that if a predicate fails in the child, the parent's version is tried. This keeps the semantics more in line with how Prolog would normally handle multiple predicates of the same name, \emph{overriding adds to behavior}. In the case of multiple inheritance we again try all implementations of the predicate, trying them in the order the parent classes were listed. If the programmer truly wishes to override its parents completely, a cut can be used.
+Inheritance allows a child class to inherit all the fields and predicates of a parent class. In most object-oriented languages redefining a virtual method (the equivalent of a predicate in OOPL) in a child that is also present in the parent class will \emph{override} behavior. Selecting which method to use at runtime is known as dynamic dispatch. In OOPL all predicates within classes are by default virtual, however with one crucial difference in that if a predicate fails in the child, the parent's version is tried. This keeps the semantics more in line with how Prolog would normally handle multiple predicates of the same name, \emph{overriding adds to behaviour}. In the case of multiple inheritance we again try all implementations of the predicate, trying them the order the parents were listed after the `extends' keyword, in a depth first fashion. If the programmer wishes to override its parents in the classical sense, a cut can be used.
 
 \subsubsection {Scope}
 
@@ -477,11 +502,11 @@ Every scope that defines the \emph{foo} predicate simply uses its own verion (i.
 
 \subsubsection {New}
 
-The \emph{new/n} variable-length predicate is used to create a new instance of object. It is a relation between a class, an instance, and a number of terms to provided to the constructor. Classes are represented at runtime as objects of class `classType'. If Cl is some runtime representation of a class, with a constructor called `con' then the goal ``new(Cl, Ob, $T_1$, ..., $T_n$)'' succeeds if and only if Ob can be unified with a new, empty, instance of Cl and the goal ``con($T_1$, ..., $T_n$)'' within Ob succeeds. new/n will attempt unification via backtracking for every constructor of the class with the correct arity (any unification/construction that occurs will be undone upon backtracking).
+The \emph{new/n} variable-length predicate is used to create a new instance of object. It is a relation between a class, an instance, and a number of terms to provided to the constructor. Classes are represented at runtime as objects of class `classType'. If Cl is some runtime representation of a class, with a constructor called `con' then the goal ``new(Cl, Ob, $T_1$, ..., $T_n$)'' succeeds if and only if Ob can be unified with a new, empty, instance of Cl and the goal ``con($T_1$, ..., $T_n$)'' within Ob succeeds. new/n will attempt unification via backtracking for every constructor of the class with the correct arity (any unification/construction that occurs will be undone upon backtracking), this is in contrast to inheritance where we would also try the parents definitions.
 
 \bigskip
 
-Let \emph{Instance} be a mathematical function that takes a class as an argument and returns an object that is an instance of that class that is renamed apart\footnote{A clause/object is \emph{renamed apart} iif its variables, including fields, do not occur elsewhere}. In terms of the operational semantics of Prolog given above, we now have an additional case where the left most goal is the \emph{new} predicate.
+Let \emph{Instance} be a mathematical function that takes a class as an argument and returns an object that is an instance of that class that is renamed apart\footnote{A clause/object is \emph{renamed apart} if its variables, including fields, do not occur elsewhere}. In terms of the operational semantics of Prolog given above, we now have an additional case where the left-most goal is the \emph{new} predicate. This uses the \emph{access/3} predicate introduced later.
 
 \begin{prooftree}
 \AXC{}
@@ -492,11 +517,11 @@ Let \emph{Instance} be a mathematical function that takes a class as an argument
 \UIC{($\theta$(access(Cl, `Constructor', con)) : $\theta$(con(Ob, $T_1, ..., T_n$ )) : $\theta$b, $\theta\circ\phi$, P) : stack}
 \end{prooftree}
 
-Semantics of the access/3 predicate are discussed below. 
+Although not explicit here, it is the access/3 predicate that will provide backtracking via the normal Prolog backtracking rule. The Semantics of the access/3 predicate are discussed below. 
 
 \subsubsection {Fields}
 
-In OOPL fields defined within a class act like variables. They are visible to any predicate within the class. If any predicate unifies the variable the substitution is visible from any other predicate in scope, and if backtracking occurs the unification is undone in the same way.
+In OOPL fields defined within a class act like variables. They are visible to any predicate within the class, unless they are shadowed by another variable. If any predicate unifies the variable the substitution is visible from any other predicate in scope, and if backtracking occurs the unification is undone in the same way.
 
 \bigskip
 
@@ -504,7 +529,7 @@ In this way objects in OOPL are mutable in that we can unify variables with othe
 
 \subsubsection{Accessing Fields}
 
-Sometimes the programmer may want to inspect the internal state of an object. In line with Prolog defining a knowledge base in terms of relations, accessing a member of a class is a relation between the instance of the class, the name of the fields, and its value. Let this relation be a predicate called access/3 such that the goal ``access(Object,Field,Value)'' is satisfiable only when `Object' is an object with a field called `Field' with value `Value'.
+Sometimes the programmer may want to inspect the internal state of an object. In line with Prolog defining a universe in terms of relations, accessing a member of a class is a relation between the instance of the class, the name of the fields, and its value. Let this relation be a predicate called access/3 such that the goal ``access(Object,Field,Value)'' is satisfiable only when `Object' is an object with a field called `Field' with value `Value'.
 
 \bigskip
 
@@ -535,7 +560,7 @@ This makes the semantics of goals that contain a term with the :: operator diffe
 
 \subsubsection{Accessing Member Predicates}
 
-OOPL does not distinguish between accessing fields and accessing member predicates, and the exact same `::' syntax is used for both. The name by which to access a predicate is the atomic name of the predicate. The result of accessing a member predicate from an object is a term that can be used with the Prolog call predicate. As previously mentioned when invoked the `This' variable is dynamically bound to the instance from which the the predicate was accessed. Therefore the result of accessing a predicate from an object can be viewed as returning a closure of the predicate with the object.
+OOPL does not distinguish between accessing fields and accessing member predicates, and the exact same `::' syntax is used for both. The name by which we access a predicate is the atomic name of the predicate. The result of accessing a member predicate from an object is a term that can be used with the Prolog call predicate. As previously mentioned, when invoked the `This' variable is dynamically bound to the instance from which the the predicate was accessed. Therefore the result of accessing a predicate from an object can be viewed as returning a closure of the predicate with the object.
 
 \section{Tombstone Diagrams}
 	Tombstone diagrams offer an intuitive way of describing compilers, especially when considering bootstrapping. They were first described by McKeenman in `A Compiler Generator'\cite{TOMB}. As they are used throughout this document a quick description is given here.
@@ -572,7 +597,7 @@ From left to right:
  	\item A machine that can natively run language M.
 \end{itemize}
 
-A diagram is built by connecting pieces together with matching languages. To represent running a program, we place one block on top of the other. To represent translating a program, we place the source program to the left of the compiler block, and the target to the right. A correct diagram should have its foundations machines and have all connections match languages.
+A diagram is built by connecting pieces together with matching languages. To represent running a program, we place one block on top of the other. To represent translating a program, we place the source program to the left of the compiler block, and the target to the right. A correct diagram should have all of its foundations be machines, and have all connections match languages.
 
  \bigskip
  
@@ -638,10 +663,10 @@ For example, using an OOPL to Prolog compiler written in Prolog to bootstrap the
 \end{tikzpicture}
 \end{center}
 
-Gives us a compiler that should be the same as if we had somehow been able to run our compiler on itself using a machine natively able to run OOPL. It is however possible to reach a fixed point but a still get an incorrect version of the compiler, whether by a bug in the first compiler or malicious insertion of a compiler back-door that propagated down the chain of compilers. This attack was first reported in an air-force critique\cite{MULTICS} and later popularized by Ken Thompson in his Turing Award acceptance speech\cite{KEN}. Therefore it should be obvious that the correctness of the compiler depends not only on the final source code, but intermediate outputs which are harder to analyse. This factored into the reasoning for testing the compiler with a corpus of small programs.
+Gives us a compiler that should be the same as if we had somehow been able to run our compiler on itself using a machine natively able to run OOPL. It is however possible to reach a fixed point but a still get an incorrect version of the compiler, whether by a bug in the first compiler or malicious insertion of a compiler back-door that propagated down the chain of compilers. This attack was first reported in an air-force critique\cite{MULTICS} and later popularized by Ken Thompson in his Turing Award acceptance speech\cite{KEN}. Therefore it should be obvious that the correctness of the compiler depends not only on the final source code, but intermediate compilers which are harder to analyse. This factored into the reasoning for testing the compiler with a corpus of small programs.
 
 \section{Requirements Analysis}
-
+\label{sec:req}
 In order to keep the project on schedule while maintaining opportunities for adding more features if the project moved faster than planned the MOSCOW method was employed. The following table illustrates planned features and categorizes them as a (M)ust have, (S)hould have, (C)ould have or (W)ould have.
 
 \subsubsection{Must}
@@ -697,7 +722,7 @@ An Incremental Development methodology was employed during development. This mad
 
 \bigskip
 
-During the testing stages of the project a number of units tests were created in Prolog to both test new features and to guard against regression. 
+During the testing stages of the project a number of unit tests were created in Prolog to both test new features and to guard against regression. 
 
 \section {Summary}
 
@@ -706,29 +731,29 @@ An outline of Prolog and an extension for it, OOPL, has been given. OOPL adds th
 \chapter{Implementation}
 
 
-This chapter covers the details of the work undertaken, and the strategies employed to achieve the goals outlined in previous chapters.
+This chapter covers the details of the work undertaken, and the strategies employed to achieve the goals outlined in previous chapters. First the compiler itself is covered. The compiler takes OOPL code and outputs pure Prolog clauses, however objects themselves are handled by a runtime library, the development of which is also covered in this section. In order to allow OOPL queries, an interpreter was developed also developed. Finally, the details of the development process such as bootstrapping and testing are given.
 
 \section{Structure Of Solution}
 
 \begin{figure}
-\includegraphics{./figs/uml.png}
+\includegraphics{./figs/uml.eps}
 \caption{A UML class diagram for the compiler}
 \label{fig:1}
 \end{figure}
 
-A simplified UML class diagram is given in figure ~\ref{fig:1}. The generator class has a constructor that takes an input file, output file, and a list of options. It contains a predicate compile/0 that acts as the main entry point and compiles from OOPL to Prolog, its operation is described in the Generation section. The parser class performs lexing and parsing, and is covered in the Lexing and Parsing section.
+A simplified UML class diagram of the compiler is given in Figure~\ref{fig:1}. The \emph{generator} class has a constructor that takes an input file, output file, and a list of options. It contains a predicate, compile/0, that acts as the main entry point and compiles from OOPL to Prolog, its operation is described in section~\ref{sec:gen}. The \emph{parser} class performs lexing and parsing, and is covered in the Lexing and Parsing section.
 
 \section{Lexing and Parsing}
 
-Typically the first two stages in the front end of a compiler will be lexing and parsing the input\cite{DRAGON}. The aim of these two steps is to first convert a stream of symbols into one of tokens, and then the token stream into a parse tree. There are many tools for automatically generating an efficient lexer/parser from a context-free grammar\footnote{e.g. LEX, YACC and similar tools} which would normally be employed at this point, however Prolog contains the inbuilt predicate read_term/3 which can handle most of this functionality.
+Typically the first two stages in the front end of a compiler is lexing and parsing the input\cite{DRAGON}. The aim of these two steps is to first convert a stream of symbols into one of tokens, and then the token stream into a parse tree. There are many tools for automatically generating an efficient lexer/parser from a context-free grammar\footnote{e.g. LEX, YACC and similar tools} which would normally be employed at this point, however Prolog contains the inbuilt predicate `read_term/3' which handles most of this functionality.
 
 \subsection{The read_term/3 Predicate}
 
-The ISO standard\cite{ISOPROLOG} predicate read_term(+Stream, -Term, +Options) is true if and only if a Prolog term can be read from \emph{Stream} and unified with \emph{Term} controlled by the list of options \emph{Options}. It reads until it encounters a dot character followed by whitespace, the sequence normally used to delimit a Prolog clause.
+The ISO standard\cite{ISOPROLOG} predicate read_term(+Stream, -Term, +Options) is true if and only if a Prolog term can be read from `Stream' and unified with `Term' controlled by the list of options `Options'. It reads until it encounters a dot character followed by whitespace, the sequence normally used to delimit a Prolog clause.
 
 \bigskip
 
-The term returned by read_term/3 is the same as if the characters read in had appeared in Prolog source, so character sequences starting with captial letters or underscores are read in as fresh variables with appropriate bindings and escape characters are stripped away. The Options provide the means for retrieving extra information such as the original variables names.
+The term returned by read_term/3 is the same as if the characters read in had appeared in Prolog source, so escape characters are stripped away and character sequences starting with captial letters or underscores are read in as fresh variables. One important option is \emph{variable_names(Eqs)}: read_term/3 will unify the Eqs variable with a list of the form $[=(N_1, V_1), ..., =(N_n, V_n)]$ that associates the names N with variables V. This can be used to keep track of the original variable name.
 
 \subsection{Declaring New Operators}
 
@@ -738,11 +763,11 @@ As OOPL is syntactically a strict superset of Prolog, to allow the read_term/3 p
 :- op(100, yfx, ::).
 \end{verbatim}
 
-the string X::Y will then be read in as the term ::(X, Y), that is a compound of arity 2, with functor ::. For each of the operators added by OOPL (::, class, extends, endclass, private, public, static etc) an op directive was specified to use the read_term/3 predicate as a lexer/parser.
+\noindent the string X::Y will then be read in as the term ::(X, Y), that is a compound of arity 2, with functor ::. For each of the operators added by OOPL (::, class, extends, endclass, private, public, static etc) an op directive was specified to allow the read_term/3 predicate to be used as a lexer/parser for OOPL.
 
 \subsection{Parse Tree}
 
-The read_term/3 predicate gives the parse tree for a single Prolog clause a compound term. This term is recursively tagged to guide the compiler. For some term T:
+The read_term/3 predicate gives the parse tree for a single Prolog clause a compound term. This term is recursively wrapped to allow the compiler to disambiguate terms. Using variables as terms to represent syntactic variables was considered bad practice as they can unify with other arbitrary terms. Instead the atom used to name them in the source was used in the parse tree. This would mean however that the atom `X' and the variable X would then become indistinguishable. To remedy this the atom(`X') and var(`X') compounds are used. This means however that the compound var(`X') in the source would become indistinguishable from the variable X. This is why compounds are wrapped as well with `compound', so the compiler can tell if a compound was a part of the source program, or was performed by the parser. This also means the action of the compiler can be directed by pattern matching on the syntax of the tagging. For some term T:
 
 \begin{itemize}
 	\item{If T is an atom: return atom(T).}
@@ -751,11 +776,9 @@ The read_term/3 predicate gives the parse tree for a single Prolog clause a comp
 	\item{If T is an anonymous variable: return var(`_').}
 \end{itemize}
 
-This tagging is required  by the compiler to correctly distinguish between terms. Using variables as terms to represent syntactic variables was considered bad practice as they can unify with other arbitrary terms. Instead the atom used to name them in the source was used in the parse tree. This would mean however that the atom `X' and the variable X would then become indistinguishable. To remedy this the atom(`X') and var(`X') tags are used. This means however that the compound var(`X') in the source would become indistinguishable from the variable X. This is why compounds are tagged as well with `compound', so the compiler can tell if a compound was a part of the source program, or was a tag provided by the parser. This also means the action of the compiler can be directed by pattern matching on the syntax of the tagging.
-
 \bigskip
 
-The parser class repeatedly reads terms and tags them to build up a parse tree for the entire program. The constructor for the parser takes an IO object for the source file. The predicate parse_until_eof/1 unifies its argument with a list of def objects, see figure~\ref{fig:1}, that represent the entire file. Each object is either a class_token or a clause_token (which are further separated into rule_token  and fact_token). The class_token object contains the list of def objects that are inside the class. The class_header_token contains the name of the class and a list of the names of its parents.
+The parser class repeatedly reads terms and warps them as above to build up a parse tree for the entire program. The constructor for the parser takes an IO object for the source file. The predicate parse_until_eof/1 unifies its argument with a list of def objects, see Figure~\ref{fig:1}, that represent the entire file. These objects are used as constructs in the compiler to represent the different tokens and associated values, and should not confused with objects the user defines. Each object is either a class_token or a clause_token (which are further separated into rule_token  and fact_token). The class_token object contains the list of def objects that appeared within a class in the source file. The class_header_token contains the name of the class and a list of the names of its parents.
 
 \subsection{Working With Multiple Files}
 
@@ -765,27 +788,27 @@ To load plain Prolog files, SWI-Prolog provides two predicates: consult/1 and in
 :- oopl_include(+file_path).
 \end{lstlisting}
 
-which is expanded by the lexer/parser, and acts in a similar way to Prolog's include/1 and textually includes the provided file before further compilation. It does this by creating a new instance of the parser class to recursively handle the new file, and appends the result into the list of def objects. Because of this the compilers output is always a single file and partial recompilation is not possible, ideally an oopl_consult/1 predicate would also be added in the future which would handle files separately.
+\noindent which is expanded by the lexer/parser, and acts in a similar way to Prolog's include/1 and textually includes the provided file before further compilation. It does this by creating a new instance of the parser class to recursively handle the new file, and appends the result into the list of def objects. Because of this the compiler's output is always a single file and partial recompilation is not possible, ideally an oopl_consult/1 predicate would also be added in the future which would handle files separately.
 
-\section{Generation}
-
-The second step of the compiler is take the parse tree and output it in Prolog. For the most part this is relatively simple as OOPL is just an extension to Prolog so most of the language maps directly. The handling of the new features introduced by OOPL is discussed below.
+\section{Code Generation}
+\label{sec:gen}
+The second phase of the compiler is take the parse tree and output it in Prolog. For the most part this is relatively simple as OOPL is just an extension to Prolog so most of the language maps directly. The handling of the new features introduced by OOPL is discussed below.
 
 \subsection{Scope Structure}
 
-Throughout the compilation process it becomes important to access certain information about the current scope and to find if and where certain things are defined. For each scope (i.e. the top scope and every classes scope) we create an instance of the scope class. This class contains a constructor that takes the list of def objects produced by the parser and creates a recursive structure that provides many utility functions used by the compiler. 
+Throughout the compilation process information about the current scope and to find if and where certain things are defined is needed. For each scope (i.e. the top scope and every class's scope) we create an instance of the scope class\footnote{This is only required as a Compile-Time construct}. This class contains a constructor that takes the list of def objects produced by the parser and creates a recursive structure that provides many utility functions used by the compiler. 
 
 \bigskip
 
-The most important predicate it provides is lookup/2. The predicate lookup(+Arg, -ScopeOf) is true if and only if Arg is visible at the current scope, and ScopeOf is unified with the scope where Arg is defined. The lookup predicate performs this search in the way defined in the preparation chapter, by first looking in the current class, then up the chain of parent classes, and finally in the enclosing scope.
+The most important predicate it provides is lookup/2. The predicate lookup(+Arg, -ScopeOf) is true if and only if Arg is visible at the current scope, and ScopeOf can be unified with the scope where Arg is defined. Arg can be either be the compound pred(Name,N), to look up a predicate Name/N, or the compound class(Name), to look up a class called `Name', or field(Name) to look up a field called `Name'.The lookup predicate performs this search in the way defined in the preparation chapter, by first looking in the current class's scope, then up the chain of parent classes, and finally in the enclosing scope.
 
 \subsection{Access}
 
-The mechanism for actually accessing a member of an object is defined in a separate runtime library, see the runtime section. However, the compiler is required to replace the functional style :: operator with a predicate access/3. 
+The mechanism for accessing a member of an object is defined in a separate runtime library, see the runtime section. However, the compiler is required to replace the functional style :: operator with a predicate access/3. 
 
 \bigskip
 
-If a clause has an expression X::Y occurring anywhere within it we create a new temporary variable, T, and insert a new goal into a conjunction just before T is first needed. To avoid repeatedly accessing the same member, we use T for every occurrence of X::Y in the clause. For example, if we have a clause with a body of the form $A_1, ..., A_k, ..., A_n$ where $A_k$ is the first goal that contains the expression X::Y then we replace it with a body of the form $A_1, ..., access(X, Y, T), [T/X::Y]A_k, ..., [T/X::Y]A_n$. We recursively repeat this process (including on the new goal added to the conjunction) until every occurrence of :: has been removed. This can be done by scanning through the conjunction from left to right only once. We simply keep a set of every replacement that has already been made, and if we find another occurrence of the :: operator with the same arguments we can use the same replacement.
+If a clause has an expression X::Y occurring anywhere within it we create a new temporary variable, T, and insert a new goal into a conjunction just before T is first needed. To avoid repeatedly accessing the same member, we use T for every occurrence of X::Y in the clause. For example, if we have a clause with a body of the form $A_1, ..., A_k, ..., A_n$ where $A_k$ is the first goal that contains the expression X::Y then we replace it with a body of the form $A_1, ..., access(X, Y, T), [T/X::Y]A_k, ..., [T/X::Y]A_n$. We recursively repeat this process (including on the new goal added to the conjunction) until every occurrence of :: has been removed. This can be done by scanning through the conjunction from left to right only once. We simply keep a set of  replacements that have already been made, and if we find another occurrence of the :: operator with the same arguments we can use the same replacement.
 
 \bigskip
 
@@ -793,36 +816,36 @@ Another consideration is what to do if we find an occurrence of :: within the he
 
 \subsection{Fields}
 
-Predicates within a class are allowed to pattern match on fields. To provide this functionality, any time the compiler encounters a term of the form var(X) it first performs a lookup in the current scope, with an argument of field(X). If X is found to be a field, it replaces it with This::`X' and then falls back on the technique described in the Access subsection. Otherwise the definition of fields themselves cause no extra clauses to be generated.  
+Predicates within a class are allowed to pattern-match on fields. To provide this functionality, any time the compiler encounters a term of the form var(X) it first performs a lookup in the current scope, with an argument of field(X). If X is found to be a field, it replaces it with This::`X' and then falls back on the technique described in the Access subsection. Otherwise the definition of fields themselves cause no extra clauses to be generated.  
 
 \subsection{Predicates}
 
-In order to convert predicates within a class to Prolog predicates, two things occur. Firstly, the name of the predicate is mangled with the prefix of the current scope. This resolves conflicts if a predicate with the same name is defined in several scopes. Secondly, if the current scope is not top, the implicit `This' argument is added to the predicate and its arity is increased by one. If the body of the predicate does not ever reference the `This' variable, the extra argument is made anonymous so further compilation steps do not raise any warnings.
+In order to convert predicates within a class to Prolog predicates, two things occur. Firstly, the name of the predicate is mangled with the prefix of the current scope. This resolves conflicts if a predicate with the same name is defined in several scopes. Secondly, if the current scope is not the top scope, the implicit `This' argument is added to the predicate and its arity is increased by one. If the body of the predicate does not ever reference the `This' variable, the extra argument is made anonymous so further compilation steps do not raise any warnings.
 
 \bigskip
 
-In the case that a predicate defined in a child class is also defined in a parent class, an extra clause is inserted in order to implement the inheritance rules. For example, if class a is the parent of class b, and they both define foo/1 then we generate following rule for foo/2 (remembering to increase the arity by 1 for the `This' argument)
+In the case that a predicate defined in a child class is also defined in a parent class, an additional clause is inserted in order to implement the inheritance rules. For example, if class a is the parent of class b, and they both define foo/1 then we generate following rule for foo/2 (remembering to increase the arity by 1 for the `This' argument)
 
 \begin{lstlisting}
 b_foo(T1, T2) :- a_foo(T1, T2).
 \end{lstlisting}
 
-This clause is inserted after other b_foo clauses, this is to ensure that the programmer can use a cut to override behavior.
+\noindent This clause is inserted after other b_foo clauses; this ensures that the programmer can use a cut to override behavior in the classical sense.
 
 \bigskip
 
-For every predicate that we encounter in the body of a clause we may need to change them to refer to the new predicates. We can lookup a predicate p/1 using the lookup predicate on the current scope object, using pred(p,1) as the argument. If this succeeds then we do one of two things:
+For every predicate that we encounter in the body of a clause we may need to its name to refer to the new predicate. For example, if we have some predicate, p/1, we can perform a lookup using the lookup predicate on the current scope object, with pred(p,1) as the argument. If this succeeds then we do one of two things:
 
 \begin{itemize}
 	\item if p is outside of a class: we simply rename p to refer to the mangled name.
 	\item if p is inside of a class: we replace p with This::p.
 \end{itemize}
 
-We perform the second transformation so that the predicate is resolved dynamically.
+The second transformation ensures that the predicate is resolved dynamically.
 
 \subsection{New}
 
-The new keyword cannot be supported by the runtime library as it has a variable number of arguments. Instead, it is decomposed into a combination of other predicates, including the call predicate which can be compiled separately by SWI-Prolog. The syntax new(C, O, A1, ..., An) is first expanded into tow new goals
+The `new `predicate, like the standard Prolog `call' predicate, has a variable number of arguments. There is no way of defining a predicate like this in Prolog, in fact SWI-Prolog has to deal with `call' specially in the compiler. This does mean, however, that `new' cannot be defined in the standard library for OOPL. Instead, it is decomposed into a combination of other predicates, including the call predicate which can then be compiled separately by SWI-Prolog. The syntax new(C, O, A1, ..., An) is first undergoes a macro like expansion into two new goals, using Prolog's `*-$>$' syntax.
 
 \begin{lstlisting}
 build_class(C, O),
@@ -831,34 +854,34 @@ build_class(C, O),
 	true
 \end{lstlisting}
 
-and then further compiled to remove the introduced/remaining non-Prolog syntax. The predicate build_class/2 is provided by the runtime (see below) and makes a new object with fresh variables for fields. The next expression adds the constructor as a goal. The `*-\textgreater' operator is a standard Prolog operator, and is roughly speaking `if then else'. The goal A *-\textgreater B ; C first attempts to satisfy A, it then cuts any choice points A may have created, and if it succeeded then B is added as a goal, otherwise C is.
+\noindent and then further compiled to remove the introduced/remaining non-Prolog syntax. The predicate build_class/2 is provided by the runtime (see below) and makes a new object with fresh variables for fields. The next expression adds the constructor as a goal. The `*-\textgreater' operator is a standard Prolog operator, and is roughly speaking `if then else'. The goal A *-\textgreater B ; C first attempts to satisfy A, it then cuts any choice points A may have created, and if it succeeded then B is added as a goal, otherwise C is.
 
 \subsection{Classes}
 
-For every class, x, defined in the source two predicates are output. The predicates class_def_x/1 and class_def_construct_x/1 both unify their single argument with the object representing class x. They do this in two different ways however. class_def_construct_x is defined as follows:
+For every class, say of name x, defined in the source two predicates are produced as output: class_def_x/1 and class_def_construct_x/1. These predicates will both unify their single argument with the object representing class x. They do this in two different ways however. class_def_construct_x is defined as follows:
 
 \begin{lstlisting}
 class_def_construct_x(X) :- class_def_classType(T), new(T, X, ...).
 \end{lstlisting}
 
-It first gets the class classType which is used to represent other classes, and then constructs a new instance of it, here `...' means all the class information for x which the compiler fills out (i.e. the mapping between predicates that the user will refer to and their mangled names, the fields a class has, its parents, its constructor etc). 
+\noindent It first gets the class `classType' which is used to represent other classes, and then constructs a new instance of it, passing x's name, constructor, parents, predicates, fields, and outer class as arguments to classType's constructor (here written as `...' for brevity).
 
 \bigskip
 
-The classType constructor is defined in the runtime library and is tasked with building the objects to represent a class. Constructing the class this way means the implementation of objects can be kept separate from the compiler. The line above is not output verbatim, but is first further compiled to remove the `new' keyword. In order to avoid creating multiple instances of the x class we don't make calls to this predicate directly. Instead a directive is inserted into the source file:
+The classType constructor is defined in the runtime library and is tasked with building the objects to represent a class. Constructing the class this way means the implementation of objects can be kept separate from the compiler which only needs to know the interface to the `classType' constructor. The line above is not output verbatim, but is first further transformed to remove the `new' keyword. In order to avoid creating multiple instances of the x class, which would increase the memory footprint of objects, we do not make calls to this predicate directly. Instead a directive is inserted into the source file:
 
 \begin{lstlisting}
  :- class_def_construct_x(X), nb_setvar(x, X).
 \end{lstlisting}
  
    
-This creates a global variable that is bound to class x, and can be accessed using its name. class_def_x/1 is used to retrieve this instance:
+\noindent Prolog has support for global variables. Two predicates for manipulating global vairables are nb_setvar and nb_getvar, which set and get variables respectively. The directive above creates a global variable that is bound to the object representing class x, and can be accessed using its name. class_def_x/1 is used to retrieve this instance:
 
 \begin{lstlisting}
  class_def_x(X) :- nb_getvar(x, X).
 \end{lstlisting}
  
-As we walk though a clause, for every atom we encounter we have to check if it refers to a class. We verify this by invoking the loopup predicate on the current scope with class(x) as an argument. If x was a class in the current scope, we first add an extra goal class_def_x(T) in a similar fashion to ::, where T is a new temporary variable, and then replace all occurrences of x in the clause with T.
+\noindent Recall that in section~\ref{sec:lang} we said that atoms with the same name and in the same scope as a class should not be atoms, but rather should refer to the class. During compilation, for every atom we encounter, we have to check if it refers to a class. We verify this by invoking the lookup predicate on the current scope with class(x) as an argument. If x was a class in the current scope, we first add an extra goal class_def_x(T) to the current clause, in a similar fashion to how we lifted out the `::' syntax, where `T' is a new temporary variable, and then replace all occurrences of the atom `x' in the clause with the variable `T'.
 
 \section{Runtime}
 
@@ -870,16 +893,16 @@ The details of the representation of objects is made opaque to the compiler and 
 
 \begin{itemize}
 	\item The class that represents classes, classType.
-	\item A predicate for building an empty object, build_class/2.
-	\item A concrete definition of the access/3 predicate (called ::/3 in the source).
+	\item The predicate for building an uninitialised object, build_class/2.
+	\item The predicate access/3 (called ::/3 in the source).
 	\item A number of useful predicates for the programmer, such as object/1 and classof/2.
 \end{itemize}
 
-As described previously, the runtime will define the classType class using a predicate class_def_classType. The predicate build_class(+Class, -Instance) takes a class and gives back an instance of that class, with all fields instantiated to fresh variables. The exact structure it gives is detailed below. The implementation of access/3 depends on this structure and is also described below. object/1(+O) is true if and only if O is an object. classof(+O,?C) is true if and only if the class of O is C.
+The first three are all used by code generated by the compiler. The other two are for use by the programmer. In a similar way that predicates are generated for other classes by the compiler, the runtime defines the classType class using a predicate class_def_classType. The predicate build_class(+Class, -Instance) takes a class and gives back an instance of that class, with all fields instantiated to fresh variables. The exact structure my implementation gives is detailed below. The implementation of access/3 depends on this structure and so it is also described below. Much like the predicates in standard Prolog atom/1, var/1, number/1, etc. that the programmer can use to inspect the type of terms at runtime, object/1(+O) is true if and only if O is an object. The predicate classof(+O,?C) is true if and only if the class of O is C, and can be used to perform reflection on classes.
 
 	\subsection{Explicit Object Structure}
 	
-Objects were built using a Prolog compound, class(C,M), where C is the object's class, and M a structure to hold an object's members. This gives the correct unification behavior of objects, as they will unify with other objects only when they share the same class and their members can be unified. Due to the way class objects are created and retrieved, even though every object contains its class the class itself is not duplicated, this means the memory cost of C is that of a single pointer. For the M structure itself, two approaches were taken and are detailed below.
+Objects were built using a Prolog compound, class(C,M), where C is the object's class, and M a structure which holds an object's members. This gives the correct unification behaviour of objects, as they will unify with other objects only when they share the same class and their members can be unified. Due to the way class objects are created and retrieved, even though every object contains its class the class itself is not duplicated, this means the memory cost of C is that of a single pointer. For the M structure itself, two approaches were taken and are detailed below.
 	
 		\subsubsection{Simple Structure}
 		
@@ -887,39 +910,75 @@ Initially a very simple structure was used in order to get the project working a
 
 		\subsubsection{Complex Structure}
 		
-In an attempt to make access more efficient, and to reduce the size of objects, a second structure was created. Instead of searching through a compound in linear time, a hash table was used for the `M' structure, and furthermore it only contained fields. The implementation of the hash table is discussed below. As the object now only contained fields, the access/3 predicate is made slightly more complex and has to make several lookups. First a lookup in M is made to see if the desired member is a field. Failing that, the class of the object is retrieved using classOf/2, and a recursive field lookup is made to find the predicates belonging to the class. Finally a lookup in the predicates is made, and the result closed with a copy of the object in order to provide the implicit `This' argument. This added quite a lot of overhead to dispatch, as several calls were required, in including several hash function calls. The cost of this is covered in the evaluation.
+In an attempt to make access more efficient, and to reduce the size of objects, a second structure was created. Instead of searching through a compound in linear time, a hash table was used for the `M' structure, and furthermore it only contained fields. The implementation of the hash table is discussed below. As the object now only contained fields, the access/3 predicate is made slightly more complex and has to make several lookups. First a lookup in M is made to see if the desired member is a field. Failing that, the class of the object is retrieved using classof/2, and a recursive field lookup is made to find the predicates belonging to the class. Finally a lookup in the predicates is made, and the result closed with a copy of the object in order to provide the implicit `This' argument. This added quite a lot of overhead to dispatch, as several calls were required, in including several hash function calls. The cost of this is covered in the evaluation.
 		
 		\subsubsection{A Prolog Hash Table}
 
-In order to support the lookup of fields and predicates in constant time it was required to design a hash table in Prolog that supported insertion and lookup operations. The insert/2 predicate takes a table and a key-value pair and adds it to the table. The lookup/2 predicate also takes a table and key-value pair, but its behavior depends on the provided key. If the pair (K, V) is looked up in the table then:
+In order to support the lookup of fields and predicates in constant-time it was required to design a hash table in Prolog that supported insertion and lookup operations. The insert/2 predicate takes a table and a key-value pair and adds it to the table. The lookup/2 predicate also takes a table and key-value pair, but its behaviour depends on the provided key. If a lookup is performed on the pair (K, V) in the table then:
 
 \begin{itemize}
 	\item if K is a variable: (K, V) is successively unified with every pair.
 	\item if K is an atom: if K is not a key in the table, then fail, otherwise attempt to unify V with the value stored in the entry.
 \end{itemize}
 
-In this way the lookup predicate acts as both a get and set, although it cannot change any particular entry, only further unify the value associated with a key. Upon backtracking any changes made to the table are undone.
+In this way the lookup predicate acts as both a get and set, although it cannot change any particular entry, only further unify the value associated with a key. Upon backtracking any changes made to the table are undone. The implementation of the table, and the method for performing a lookup is given bellow.
 
 \bigskip
 
-The table itself is a compound table(S, T). S is an atom that records the size of the table, and T a compound with arity equal to S, whose arguments are the tables entries. A strategy of Open Addressing with strobe size 1 was employed. If an atomic key was provided it was hashed and used as an initial index into the table. If an entry was found at that index with the correct key, the provided value is unified with the value found in the table. If there is a key there, but not the correct one, the next index is tried in the same way. Finally, if an entry is found with the key unbound, then we fail. If the key provided is a variable, then a linear search pattern is used, and skipping any entries that have unbound keys, we attempt to unify the provided pair with every pair in the table. 
+\begin{figure}
+ \centering
+\includegraphics{./figs/hash2.eps}
+\caption{Looking up a key that is an atom.}
+\label{fig:2}
+\end{figure}
+\begin{figure}
+ \centering
+\includegraphics{./figs/hash3.eps}
+\caption{Looking up a key that is an atom and finding the wrong key.}
+\label{fig:3}
+\end{figure}
+\begin{figure}
+ \centering
+\includegraphics{./figs/hash4.eps}
+\caption{Looking up an atomic key that isn't in the table.}
+\label{fig:4}
+\end{figure}
+\begin{figure}
+ \centering
+\includegraphics{./figs/hash1.eps}
+\caption{Looking up a key that is a variable.}
+\label{fig:5}
+\end{figure}
+
+The table itself is the compound `table(S, T)', here S is an atom that records the size of the table, and T a compound with arity equal to S, whose arguments are the table's entries. A strategy of Open Addressing with strobe size 1 was employed. If an atomic key is provided it is hashed and used as an initial index into the table. If an entry is found at that index with the correct key, as in Figure~\ref{fig:2}, the provided value is unified with the value found in the table. In Figure~\ref{fig:2} this would result in the unification X=2. If there is a key there, but not the correct one (as in Figure~\ref{fig:3}), the next index is tried in the same way. Finally, if an entry is found with the key unbound like in Figure~\ref{fig:4}, then the key is not in the table and we fail. If the key provided is a variable like in Figure~\ref{fig:5}, then a linear search pattern is used, and skipping any entries that have unbound keys, we attempt to unify the provided pair with every pair in the table. In Figure~\ref{fig:5} this would result in X=a, and then upon backtracking X=c. Note that the performance of the table is not guaranteed to be constant time, in the worst case where every key hashes to the same value we will see lookup times proportional to the number of entries in the table. However, if we make the table sparse enough and use a hash function that will distribute entries uniformly the number of entries we have to step is expected to be constant. 
 
 \bigskip
 
-Using field names as keys to the table, this provides a basis for the semantics we require for accessing members. If we provide an unbound variable then we get every field-value pair, and if we provide a field name we get just the correct value, but now in constant time.
+Insertion is very similar to a lookup, but instead of failing when we reach an empty entry we unify the entry with the new key-value pair. Furthermore, the key must be a value and not already be in the table. Insertion into the table is only performed by the runtime, when an object is constructed, and so there is no chance of the table raising an exception due to a user program. 
+
+\bigskip
+
+Using field names as keys to the table, this provides a basis for the semantics we require for accessing members. If we provide an unbound variable then we get every field-value pair, and if we provide a field name we get just the correct value, but now in constant time. The number of fields an object has is constant (it is defined by its class), so we can choose an appropriate size for a hash table when we construct the object.
 
 	\subsection{Representing Classes}
 	
-As previously mentioned, classes are embodied by objects at runtime that are instances of a special class called classType. The class classType is defined in OOPL as:
+As previously mentioned, classes are embodied by objects at runtime that are instances of a special class called classType. The class called `classType' is defined in OOPL as:
 
 \begin{lstlisting}
 class classType.
+
+	% The fields that store all the class information.
 	Name.
 	Fields.
 	Predicates.
 	Parent.
 	Outer.
 	Constructor.
+	
+	% The constructor simply unifies its arguments
+	% with the fields. There is no need to use the
+	% `=' operator.
+	
 	classType(Name, 
 		Fields,
 		Predicates,
@@ -929,7 +988,24 @@ class classType.
 endclass.
 \end{lstlisting}
 
-Every class in OOPL is represented at runtime by an instance of this type, including classType itself! As every object contains its class, this would mean that objects become cyclic as the class of classType is classType etc. This cycle would cause all objects to fail the occurs check. To remedy this, the class of classType is instead the atom `self', which is hidden by the runtime library by automatically substituting it for the object when using the classof/2 predicate.
+\noindent Every class in OOPL is represented at runtime by an instance `classType', including the class `classType' itself! As every object contains its class, this would mean that objects become cyclic as the class of classType is itself. This cycle would cause all objects to fail the occurs check. To remedy this we use the atom `self' instead of an argument which would lead to in infinite cycle. For example, instead of writing:
+
+\begin{lstlisting}
+X = (X, Y)
+\end{lstlisting}
+\noindent write:
+\begin{lstlisting}
+X = (self, Y)
+\end{lstlisting}
+
+\noindent This makes the explicit structure of objects finite. However, in order to make it appear infinite to the programmer (as is expected) the classof/2 predicate in the runtime library automatically substitutes the atom `self' for the object containing it. Some pseudocode for the classof/2 predicate:
+
+
+\begin{lstlisting}
+ classof((X,Y), Z) :- IF X = self THEN Z = (X,Y) ELSE Z = X.
+\end{lstlisting} 
+
+\noindent As the programmer should never explicitly manipulate objects, using `self' to remove cycles should not change any other functionality. 
 
 \section{Bootstrapping}
 
@@ -937,19 +1013,19 @@ As the project progressed and more features were added to the compiler, a succes
 
 \begin{center}
 \begin{tikzpicture}
-	\node(compiler1) [tblock] {\tblocktextnm{OOPL}{Prolog}{Prolog}{Snap}};
+	\node(compiler1) [tblock] {\tblocktextnm{OOPL}{Prolog}{Prolog}{1}};
 	\tblockoutline{compiler1};
 	
-	\node(compiler2) at (compiler1-1-1.north west) [tblock, anchor = compiler2-2-2.north east] {\tblocktextnm{OOPL}{Prolog}{OOPL}{New}};
+	\node(compiler2) at (compiler1-1-1.north west) [tblock, anchor = compiler2-2-2.north east] {\tblocktextnm{OOPL}{Prolog}{OOPL}{2}};
 	\tblockoutline{compiler2};
 	
-	\node(compiler3) at (compiler1-1-3.north east) [tblock, anchor = compiler3-2-2.north west] {\tblocktextnm{OOPL}{Prolog}{Prolog}{New'}};
+	\node(compiler3) at (compiler1-1-3.north east) [tblock, anchor = compiler3-2-2.north west] {\tblocktextnm{OOPL}{Prolog}{Prolog}{3}};
 	\tblockoutline{compiler3};
 	
-	\node(compiler4) at (compiler3-1-1.north west) [tblock, anchor = compiler4-2-2.north east] {\tblocktextnm{OOPL}{Prolog}{OOPL}{New}};
+	\node(compiler4) at (compiler3-1-1.north west) [tblock, anchor = compiler4-2-2.north east] {\tblocktextnm{OOPL}{Prolog}{OOPL}{2}};
 	\tblockoutline{compiler4};
 	
-	\node(compiler5) at (compiler3-1-3.north east) [tblock, anchor = compiler5-2-2.north west] {\tblocktextnm{OOPL}{Prolog}{Prolog}{New''}};
+	\node(compiler5) at (compiler3-1-3.north east) [tblock, anchor = compiler5-2-2.north west] {\tblocktextnm{OOPL}{Prolog}{Prolog}{4}};
 	\tblockoutline{compiler5};
 	
 	\wsupt{Prolog}{compiler1};
@@ -957,19 +1033,19 @@ As the project progressed and more features were added to the compiler, a succes
 \end{tikzpicture}
 \end{center}
 
-First the new version of the compiler, \emph{New}, was compiled using the snapshot, \emph{Snap}. This gave a compiler, \emph{New'}, that had the new feature. However, it itself would be unable to use the feature, so to fix this we run New' on New to get \emph{New''} which both supports the new feature and uses it. At this point further iterations of the bootstrapping process only served to verify the fixed point had been reached. If the feature is later relied on in the compiler, the snapshot Snap is replaced by New'' to avoid having to create an unnecessarily long chain of bootstrapping steps when recovering from a problem, or cloning the project on a new machine.
+First the new version of the compiler, 2, was compiled using the snapshot, 1. This gave a compiler, 3, that had the new feature. However, it itself would be unable to use the feature, so to fix this we run 3 on 2 to get 4 which both supports the new feature and uses it. At this point further iterations of the bootstrapping process only served to verify the fixed point had been reached. If the feature is later relied on in the compiler, the snapshot 1 is replaced by 4 to avoid having to create an unnecessarily long chain of bootstrapping steps when recovering from a problem, or cloning the project on a new machine.
 
 \section{Interpreter}
 
-As with Prolog programs, users expect to be able to submit queries to a OOPL program. In order to interface with the output produced at the compile step and still be able to use new syntax, such as new and ::, an interactive interpreter is required. At the end of the programs clauses the compiler inserts a directive to ensure the interpreter is loaded and an entry point goal is automatically invoked. The compiler also creates a new fact, defined_names/1, which contains the names of all classes and predicates defined at the top level.
+As with Prolog programs, users expect to be able to submit queries to a OOPL program. In order to interface with the output produced at the compile step and still be able to use new syntax, such as new and ::, an interactive interpreter is required. At the end of the programs clauses the compiler inserts a directive to ensure the interpreter is loaded and an entry point goal is automatically invoked. The compiler also outputs a new fact, defined_names/1, at the end of the output source file which contains the names of all classes and predicates defined at the top level.
 
 \bigskip
 
-The interpreter works on the principle of a \emph{read-evaluate-print loop}(REPL). The user provides a single query, this query is then evaluated (in this case compiled into Prolog and then passed on to the underlying Prolog interpreter) and the resulting variable bindings, or exceptions, are printed out to the console. This process then repeats. The work of reading and evaluating the input is a very similar task to that performed by the compiler. The interpreter itself is also written in OOPL, and so can make use of inheritance to extend functionality of the compiler. The interpreter class simply extends that of the generator, slightly modifying behavior to call the result rather output it to a file. The parser class is also extended to not replace variables with terms for printing (they are required to stay as variables), and the scope class is extended to use the defined_names/1 predicate to retrieve the names of the definitions in the original source file.
+The interpreter works on the principle of a \emph{read-evaluate-print loop}(REPL). The user provides a single query, this query is then evaluated (in this case transformed from OOPL into Prolog and then passed on to the underlying Prolog interpreter) and the resulting variable bindings, or exceptions, are printed out to the console as usual. This process then repeats. The work of reading and evaluating the input is a very similar task to that performed by the compiler. The interpreter itself is also written in OOPL, and so can make use of inheritance to extend functionality of the compiler. The interpreter class simply extends that of the generator, slightly modifying behavior to call the result rather output it to a file. The parser class is also extended to not replace variables with atoms, as they are required for evaluation not printing. Finally the scope class is extended to use the defined_names/1 predicate to rebuild the top level scope object that the compiler created. This is required to map the original predicate names and class names to the predicates produced by the compiler.
 
 \section{Unit Testing}
 
- SWI-Prolog offers a powerful framework for writing unit tests in Prolog. A single predicate offered a fine-grained level of testing, and so tests were designed for most of the important predicates within the compiler. As the unit test framework only works with Prolog, the interpreter was invoked to test predicates that occurred within classes. The show_coverage/1 predicate takes a goal, in this case the entry point for the unit tests, and shows the percentage of clauses that are entered, and the percentage that only ever failed. The results of a run of the unit tests are given below:
+SWI-Prolog offers a powerful framework for writing unit tests in Prolog. A single predicate offered a fine-grained level of testing, and so tests were designed for most of the important predicates within the compiler. As the unit test framework only works with Prolog, not OOPL, some modification was required. This was done by using the OOPL interpreter to execute all the queries in the unit test module. The `show_coverage/1' predicate takes a goal, in this case the entry point for the unit tests, and shows the percentage of clauses that are entered, and the percentage that only ever failed. The results of a run of the unit tests are given below:
  
  \begin{verbatim}
  ?- test.
@@ -999,16 +1075,71 @@ The focus of this chapter is to evaluate the results of the project, as well as 
 
 \section{Correctness}
 
-The primary concern of the project is that the compiler produces output which obeys the semantics outlined in the preparation section. A number of code examples were carefully crafted that exemplified each feature of the language, and their outputs were compared with the expected result. The features under test are all those in the must section.
+The primary concern of the project is that the compiler produces output which obeys the semantics outlined in the Preparation section. A number of code examples were carefully crafted that exemplified each feature of the language, and their outputs were compared with the expected result. The features under test are all those in Section~\ref{sec:req} under `must'.
 
 \subsection{Examples}
 
+Each of the examples below contains both the OOPL source (on the left of each table), and the results of a number of queries (on the right of each table) to the OOPL interpreter. The Objects themselves are pretty printed in a tree like structure. The `?-' prompt  is for a query, and the `\textbar:' prompt for a single character. The interpreter will print `true' followed by the variable bindings for every success, and `fail' when there are no more.
+
 	\subsubsection{Constructing Classes}
+This example shows how a class can be declared with a constructor, and the `new' predicate used to build an instance. It specifically illustrates how multiple constructors can be declared, and how backtracking occurs over `new'. There is a single class called \emph{construct}, which has two constructors \emph{construct/3} and  \emph{construct/2}.  The \emph{construct/3} constructor predicate has two definitions, the second reverses the order of the arguments. When we retry the goal, we should try the other constructor to get the fields assigned to differently. The  \emph{construct/2} constructor does more than just assign its arguments, it makes the third field the sum of the other two.
 	
-	This example shows how a class can be declared with a constructor, and the new predicate used to build an instance. It specifically illustrates how multiple constructors can be declared, and how backtracking occurs over new. There is a single class called \emph{construct}, which has two constructors \emph{construct/3} and  \emph{construct/2}.  The \emph{construct/3} constructor predicate has two definitions, the second reverses the order of the arguments. When we retry the goal, we should try the other constructor to get the fields assigned to differently. The  \emph{construct/2} constructor does more than just assign its arguments, it makes the third field the sum of the other two.
-	
+\definecolor{llightgray}{rgb}{.9,.9,.9}
+\definecolor{lightgray}{rgb}{.8,.8,.8}
+
+\newsavebox{\boxaa}
+\setbox\boxaa\hbox{
+\begin{minipage}{0.5\hsize}
+\begin{lstlisting}
+?-new(construct, C, a, b, c).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+true.
+C = instance of construct.
+        |
+        |-Field1=a.
+        |-Field2=b.
+        |-Field3=c.
+|:
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}]
+true.
+C = instance of construct.
+        |
+        |-Field1=c.
+        |-Field2=b.
+        |-Field3=a.
+|:
+\end{lstlisting} 
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+fail.
+\end{lstlisting}
+\end{minipage}
+}
+
+\newsavebox{\boxab}
+\setbox\boxab\hbox{
+\begin{minipage}{0.5\hsize}
+\begin{lstlisting}
+?-new(construct, C, 1, 2).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+true.
+C = instance of construct.
+        |
+        |-Field1=1.
+        |-Field2=2.
+        |-Field3=3.
+|:
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}]
+fail.
+\end{lstlisting}
+\end{minipage}
+}
+
 \begin{center}
-\begin{tabular}{c|c}
+\begin{tabular}{c|l}
 	Source & Command Line Input/Output \\
 	\hline
 	\small
@@ -1035,44 +1166,54 @@ endclass.
 \end{lstlisting}
 
 &
-	\small
-\begin{lstlisting}
-?-new(construct, C, a, b, c).
-true.
-C = instance of construct.
-        |
-        |-Field1=a.
-        |-Field2=b.
-        |-Field3=c.
-|: 
-true.
-C = instance of construct.
-        |
-        |-Field1=c.
-        |-Field2=b.
-        |-Field3=a.
-|: 
-fail.
-?-new(construct, C, 1, 2).
-true.
-C = instance of construct.
-        |
-        |-Field1=1.
-        |-Field2=2.
-        |-Field3=3.
-|: 
-fail.
-\end{lstlisting}
+
+\begin{minipage}{0.5\hsize}
+\vspace*{1ex}
+\fbox{\usebox{\boxaa}}
+
+\fbox{\usebox{\boxab}}
+\end{minipage}
 
 \\
 \end{tabular}
 \end{center}
 
-The first query succeeds twice, correctly initialising all three fields, backtracking over the first construct/3 constructor predicate to the second. The second query succeeds only once as there is only one construct/2 predicate, but also performs the sum as expected.
+\noindent The first query shows how backtracking over constructors works. It succeeds twice, first correctly initialising all three fields, then backtracking and using the second constructor. The second query shows how using a different number of arguments calls the correct constructor, it succeeds only once as there is only one construct/2 predicate, but also performs the sum as expected.
 
 	\subsubsection{Accessing Members}
 	
-This example shows the use of the `::' operator to access both fields and member predicates. There is a single class, \emph{members} that has 3 fields (automatically unified when the class is constructed) and two predicates: one which returns the sum of its fields, the other the product.
+This example shows the use of the `::' operator to access both fields and member predicates. There is a single class, \emph{members}, that has three fields (automatically unified with the numbers `1', `2' and `4' when the object is constructed) and two predicates: one which returns the sum of its fields, the other the product.
+	
+	
+\newsavebox{\boxba}
+\setbox\boxba\hbox{
+\begin{minipage}{0.5\hsize}
+\begin{lstlisting}
+?-new(members, M),
+  (F1, F2, F3) = 
+    (M::`Field1',
+     M::`Field2',
+     M::`Field3'),
+  call(M::predicate1, X1),
+  call(M::predicate2, X2).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+true.
+M = instance of members.
+        |
+        |-Field1=1.
+        |-Field2=2.
+        |-Field3=4.
+F1=1.
+F2=2.
+F3=4.
+X1=7.
+X2=8.
+\end{lstlisting}
+\end{minipage}
+}	
+
+
 	
 	\begin{center}
 \begin{tabular}{c|c}
@@ -1100,36 +1241,90 @@ class members.
 endclass.
 \end{lstlisting}
 &
-	\small
-\begin{lstlisting}
-?-new(members, M),
-  (F1, F2, F3) = 
-    (M::`Field1',
-     M::`Field2',
-     M::`Field3'),
-  call(M::predicate1, X1),
-  call(M::predicate2, X2).
-true.
-M = instance of members.
-        |
-        |-Field1=1.
-        |-Field2=2.
-        |-Field3=4.
-F1=1.
-F2=2.
-F3=4.
-X1=7.
-X2=8.
-\end{lstlisting}
+
+\begin{minipage}{0.5\hsize}
+\vspace*{1ex}
+\fbox{\usebox{\boxba}}
+\end{minipage}
+
 \\
 \end{tabular}
 \end{center}
 
-The query first constructs an instance of  \emph{members}, and unifies F1, F2, and F3 with Field1, Field2 and Field3 respectively. Two calls are also made, the first to predicate1 and the second to predicate2. X1 and X2 are unified with the sum and product respectively.
+\noindent The query first constructs an instance of  \emph{members}, and unifies F1, F2, and F3 with Field1, Field2 and Field3 respectively. Two calls are also made, the first to predicate1 and the second to predicate2. X1 and X2 are unified with the sum and product respectively.
 
 	\subsubsection{Scoping}
 	
-This example shows how predicates resolve differently depending on the scope. We define a predicate \emph{predicate/1} in several different places. There are 4 classes, a through d, each has a constructor that calls predicate/1, which resolves differently in each case.
+This example shows how predicates resolve differently depending on the scope. We define a predicate \emph{predicate/1} in several different places. There are 4 classes, `a' through `d', each has a constructor that calls predicate/1, which resolves differently in each case.
+
+\newsavebox{\boxca}
+\setbox\boxca\hbox{
+\begin{minipage}{0.5\hsize}
+\begin{lstlisting}
+?-predicate(X).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+true.
+X=outside.
+|:
+\end{lstlisting}
+\end{minipage}
+}	
+
+\newsavebox{\boxcb}
+\setbox\boxcb\hbox{
+\begin{minipage}{0.5\hsize}
+\begin{lstlisting}
+?-new(a, _, X).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+true.
+X=within_a.
+|:
+\end{lstlisting}
+\end{minipage}
+}	
+
+\newsavebox{\boxcc}
+\setbox\boxcc\hbox{
+\begin{minipage}{0.5\hsize}
+\begin{lstlisting}
+?-new(b, _, X).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+true.
+X=within_a.
+|:
+\end{lstlisting}
+\end{minipage}
+}	
+
+\newsavebox{\boxcd}
+\setbox\boxcd\hbox{
+\begin{minipage}{0.5\hsize}
+\begin{lstlisting}
+?-new(c, _, X).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+true.
+X=within_c.
+|:
+\end{lstlisting}
+\end{minipage}
+}	
+
+\newsavebox{\boxce}
+\setbox\boxce\hbox{
+\begin{minipage}{0.5\hsize}
+\begin{lstlisting}
+?-new(d, _, X).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+true.
+X=outside.
+\end{lstlisting}
+\end{minipage}
+}	
 
 	\begin{center}
 \begin{tabular}{c|c}
@@ -1159,39 +1354,117 @@ class d.
 endclass.
 \end{lstlisting}
 &
-	\small
-\begin{lstlisting}
-?-predicate(X).
-true.
-X=outside.
-|:
-?-new(a, _, X).
-true.
-X=within_a.
-|:
-?-new(b, _, X).
-true.
-X=within_a.
-|:
-?-new(c, _, X).
-true.
-X=within_c.
-|:
-?-new(d, _, X).
-true.
-X=outside.
-
-\end{lstlisting}
+\begin{minipage}{0.5\hsize}
+\vspace*{1ex}
+\fbox{\usebox{\boxca}}
+\fbox{\usebox{\boxcb}}
+\fbox{\usebox{\boxcc}}
+\fbox{\usebox{\boxcd}}
+\fbox{\usebox{\boxce}}
+\end{minipage}
 \\
 \end{tabular}
 \end{center}
 
-Five quries were executed. The first calls predicate at the top level. The other 4 construct each class in order. With class a we get within_a as a result. With class b we get `within_a' as b extends a. With class c we get a `within_c' as although it also extends a, it also has a definition of predicate. Finally for d we resolve the predicate to the top level definition, outside all the classes as d has neither its own definition nor does it inherit one.
+Five queries were executed. The first calls `predicate' at the top level. The other four construct each class in order. With class `a' we get `within_a' as a result. With class `b' we get `within_a' as `b' extends `a'. With class `c' we get a `within_c' as although it also extends `a', it also has a definition of `predicate'. Finally for `d' we resolve the predicate to the top level definition, outside all the classes as `d' has neither its own definition nor does it inherit one.
 
 \subsubsection{Inheritance}
 	
-This example shows how inheritance extends behavior on backtracking. There are 4 classes, each with a predicate \emph{f/1}. The class_d extends class_b extends class_a, as well class_c extends class_a.
-	\begin{center}
+This example shows how inheritance extends behavior on backtracking. There are four classes, each with a predicate \emph{f/1}. The class `class_d' extends `class_b' extends `class_a', as well `class_c' extends `class_a'.
+
+
+\newsavebox{\boxda}
+\setbox\boxda\hbox{
+\begin{minipage}{0.52\hsize}
+\begin{lstlisting}
+?-new(class_a, X), call(X::f, Y).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}, belowskip=0pt]
+true.
+X = instance of class_a
+Y=a.
+|:
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}, belowskip=0pt]
+fail.
+\end{lstlisting}
+\end{minipage}
+}
+
+\newsavebox{\boxdb}
+\setbox\boxdb\hbox{
+\begin{minipage}{0.52\hsize}
+\begin{lstlisting}
+?-new(class_b, X), call(X::f, Y).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}, belowskip=0pt]
+true.
+X = instance of class_b
+Y=b.
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}, belowskip=0pt]
+true.
+X = instance of class_b
+Y=a.
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}, belowskip=0pt]
+fail.
+\end{lstlisting}
+\end{minipage}
+}
+
+\newsavebox{\boxdc}
+\setbox\boxdc\hbox{
+\begin{minipage}{0.52\hsize}
+\begin{lstlisting}
+?-new(class_c, X), call(X::f, Y).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}, belowskip=0pt]
+true.
+X = instance of class_c
+Y=c.
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}, belowskip=0pt]
+fail. 
+\end{lstlisting}
+\end{minipage}
+}
+
+\newsavebox{\boxdd}
+\setbox\boxdd\hbox{
+\begin{minipage}{0.52\hsize}
+\begin{lstlisting}
+?-new(class_d, X), call(X::f, Y).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}, belowskip=0pt]
+true.
+X = instance of class_d
+Y=d.
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}, belowskip=0pt]
+true.
+X = instance of class_d
+Y=b.
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}, belowskip=0pt]
+true.
+X = instance of class_d
+Y=a.
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}, belowskip=0pt]
+fail.
+\end{lstlisting}
+\end{minipage}
+}
+
+\begin{adjustwidth}{-0cm}{-0cm}
+\begin{center}
 \begin{tabular}{c|c}
 Source & Command Line Input/Output \\
 \hline
@@ -1225,55 +1498,67 @@ class class_d extends class_b.
 endclass.
 \end{lstlisting}
 &
-	\small
-\begin{lstlisting}
-?-new(class_a, X), call(X::f, Y).
-true.
-X = instance of class_a
-Y=a.
-|: 
-fail.
-?-new(class_b, X), call(X::f, Y).
-true.
-X = instance of class_b
-Y=b.
-|: 
-true.
-X = instance of class_b
-Y=a.
-|: 
-fail.
-?-new(class_c, X), call(X::f, Y).
-true.
-X = instance of class_c
-Y=c.
-|: 
-fail.
-?-new(class_d, X), call(X::f, Y).
-true.
-X = instance of class_d
-Y=d.
-|: 
-true.
-X = instance of class_d
-Y=b.
-|: 
-true.
-X = instance of class_d
-Y=a.
-|: 
-fail.
-?-
-\end{lstlisting}
+\begin{minipage}{0.5\hsize}
+\vspace*{1ex}
+\fbox{\usebox{\boxda}}
+\fbox{\usebox{\boxdb}}
+\fbox{\usebox{\boxdc}}
+\fbox{\usebox{\boxdd}}
+\end{minipage}
 \\
 \end{tabular}
 \end{center}
+\end{adjustwidth}
 
-The first query construct a class_a and calls f, getting `a' as a result. The second query constructs a class_b, when we call f we first get `b', but on backtracking get an `a' due to inheritance. With the third query we insert a cut, so even though class_c extends class_a we only get `c' as a result. Finally the last query shows this works with a hierarchy of inheritance, we get the sequence of solutions `d', `b', `a'. 
+The first query constructs a class_a and calls f, getting `a' as a result. The second query constructs a class_b, when we call f we first get `b', but on backtracking get an `a' due to inheritance. With the third query we insert a cut, so even though class_c extends class_a we only get `c' as a result. Finally the last query shows this works with a larger hierarchy of inheritance, we get the sequence of solutions `d', `b', `a'. 
 
 	\subsubsection {Dynamic Dispatch}
 	
-This example shows how the late binding and dynamic dispatch of predicates works in OOPL. We define a superclass called animal. It contains a predicate vocalise/1 that will write to user_output any result of the says/1. The classes bird and polly all have animal somewhere in their class hierarchy, and add new definitions to says.
+This example shows how the late binding and dynamic dispatch of predicates works in OOPL. We define a superclass called animal. It contains a predicate abstract predicate says/1, and a predicate vocalise/1 that will write to user_output any result of the says/1 predicate. The classes bird and polly all have animal somewhere in their class hierarchy, and define more clauses for says/1 so that when vocalise/1 is called we get different results.
+
+\newsavebox{\boxea}
+\setbox\boxea\hbox{
+\begin{minipage}{0.50\hsize}
+\begin{lstlisting}
+?-new(bird, X), 
+	call(X::vocalise).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+cheep cheep
+true.
+X = instance of bird
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}]
+fail.
+\end{lstlisting}
+\end{minipage}
+}
+
+\newsavebox{\boxeb}
+\setbox\boxeb\hbox{
+\begin{minipage}{0.50\hsize}
+\begin{lstlisting}
+?-new(polly, X),
+	call(X::vocalise).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+Who's a pretty boy then?
+true.
+X = instance of polly
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}]
+cheep cheep
+true.
+X = instance of polly
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+fail.
+\end{lstlisting}
+\end{minipage}
+}
 
 \begin{center}
 \begin{tabular}{c|c}
@@ -1283,7 +1568,9 @@ Source & Command Line Input/Output \\
 \begin{lstlisting}
 class animal.
   
-  says(_) :- fail.
+  % This is how we create
+  % an abstract method.
+  says(_) :- fail. 
 
   vocalise :-
     says(X),
@@ -1301,35 +1588,59 @@ class polly extends bird.
 endclass.
 \end{lstlisting}
 &
-	\small
-\begin{lstlisting}
-?-new(bird, X), call(X::vocalise).
-cheep cheep
-true.
-X = instance of bird
-|: 
-fail.
-?-new(polly, X), call(X::vocalise).
-Who's a pretty boy then?
-true.
-X = instance of polly
-|: 
-cheep cheep
-true.
-X = instance of polly
-|: 
-fail.
-?-
-\end{lstlisting}
+\begin{minipage}{0.5\hsize}
+\vspace*{1ex}
+\fbox{\usebox{\boxea}}
+\fbox{\usebox{\boxeb}}
+\end{minipage}
 \\
 \end{tabular}
 \end{center}
 
-When we construct a bird and call vocalise, we get vocalise as defined in animal (as bird does not define its own), but the says definition of bird is used instead. Similarly for a new polly, we get the result of says from the polly class (and also the result from bird on backtracking, due to the behavior of inheritance). 
+When we construct a bird and call vocalise, we get vocalise as defined in animal (as bird does not define its own), but the says definition of bird is used instead. Similarly for a new polly, we get the result of says from the polly class (and also the result from bird on backtracking, due to the behaviour of inheritance). 
 
-	\subsubsection{First Order Classes}
+	\subsubsection{Higher-Order Classes}
 	
-This final example shows how classes are teated as first-class citizens. There are only two classes, a and b, and neither have any members.
+This final example shows how classes are teated as first-class citizens. There are only two classes, `a' and `b', and neither have any members.
+
+\newsavebox{\boxfa}
+\setbox\boxfa\hbox{
+\begin{minipage}{0.50\hsize}
+\begin{lstlisting}
+?-member(Class, [a,b]), 
+	new(Class, Object).
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+true.
+Class = instance of classType.
+        |
+        |-Name=a.
+        |-Fields=[].
+        |-Predicates=[].
+        |-Parent=none.
+        |-Outer=none.
+        |-Constructor=none.
+Object = instance of a
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{llightgray}]
+true.
+Class = instance of classType.
+        |
+        |-Name=b.
+        |-Fields=[].
+        |-Predicates=[].
+        |-Parent=none.
+        |-Outer=none.
+        |-Constructor=none.
+Object = instance of b
+|: 
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{lightgray}]
+fail.
+\end{lstlisting}
+\end{minipage}
+}
 
 	\begin{center}
 \begin{tabular}{c|c}
@@ -1344,33 +1655,10 @@ class b.
 endclass.
 \end{lstlisting}
 &
-	\small
-\begin{lstlisting}
-?-member(Class, [a,b]), new(Class, Object).
-true.
-Class = instance of classType.
-        |
-        |-Name=a.
-        |-Fields=[].
-        |-Predicates=[].
-        |-Parent=none.
-        |-Outer=none.
-        |-Constructor=none.
-Object = instance of a
-|: 
-true.
-Class = instance of classType.
-        |
-        |-Name=b.
-        |-Fields=[].
-        |-Predicates=[].
-        |-Parent=none.
-        |-Outer=none.
-        |-Constructor=none.
-Object = instance of b
-|: 
-fail.
-\end{lstlisting}
+\begin{minipage}{0.5\hsize}
+\vspace*{1ex}
+\fbox{\usebox{\boxfa}}
+\end{minipage}
 \\
 \end{tabular}
 \end{center}
@@ -1379,15 +1667,15 @@ We execute the query the binds the variable class to either a or b, using the me
 
 \subsection{Incomplete Features}
 
-Due to time constraints private/public/static predicates, multiple inheritance and inner classes were never finished.  However they were partially finished in that the parser can handle everything but multiple inheritance, and most of the infrastructure was created in the generator to support multiple inheritance and inner classes. 
+Due to time constraints extensions to provide private/public/static predicates, multiple inheritance and inner classes were never completed. However they were partially completed in that the parser can handle everything but multiple inheritance, and most of the infrastructure was created in the generator to support multiple inheritance and inner classes.
 
 \section{Performance}
 
-The aim of extending Prolog with objects was to provide more power to the programmer, however this does incur a penalty in terms of execution time and memory overhead. This section quantifies these penalties and contrasts with other implementations. All tests were run on my own machine, running windows 7, with an Intel i5-2500k CPU @3.3Ghz, using SWI-Prolog as the back-end compiler, version 7.1.33.
+The aim of extending Prolog with objects was to provide more expressiveness to the programmer, however this does incur a penalty in terms of execution time and memory overhead. This section quantifies these penalties and contrasts with other implementations. All tests were run on my own machine, running Windows 7, with an Intel i5-2500k CPU @3.3Ghz, using SWI-Prolog as the back-end compiler, version 7.1.33.
 
 \subsection{Dynamic Dispatch}
 
-In order to implement polymorphism within OOPL, predicate calls are all late bound and the cost of both looking the predicate up and calling it incurs an overhead. To quantify this the time to make a million calls was measured. As a comparison the times to call the \emph{Baseline} (the time it takes to call a normal Prolog predicate), and the \emph{Call Predicate} (the time to invoke using the inbuilt call/2 predicate) were also recorded. In order to measure the impact of having larger classes (and thus a greater search space) a number of classes were defined, each with a larger number of predicates. In order to evaluate the pros of cons of the different object structures, both implementations where timed.
+In order to implement polymorphism within OOPL, predicate calls are all late bound and the cost of both looking the predicate up and calling it incurs an overhead. To quantify this the time to make a million calls was measured. As a comparison the times to call the \emph{Baseline} (the time it takes to call a normal Prolog predicate), and the \emph{Call Predicate} (the time to invoke using the inbuilt call/2 predicate) were also recorded. In order to measure the impact of having larger classes (and thus a greater search-space) a number of classes were defined, each with a larger number of predicates. In order to evaluate the pros of cons of the different object structures, both implementations were timed.
 
 \begin{center}
 \begin{tabular}{c|c|c}
@@ -1414,15 +1702,15 @@ Dynamic Dispatch& Simple Structure & Complex Structure \\
 \end{tabular}
 \end{center}
 
-As expected the time to make a call with the compound structure scaled roughly linearly with the number of members an object had, while the hash structure remained roughly constant although the extra cost of multiple calls to calculate the hash lead to making it an order of magnitude slower for very small classes. Even for the simple structure with only a few, we are roughly incurring a 3-4x slowdown when making calls. For an imperative language where calls only make up a small part of the total execution time (we tend to make heavier use of if blocks and loops for flow control), this may not be too significant. However, Prolog relies heavily on making calls and this slowdown proves to be significant. There do exist solutions to this problem, such as inline caching to remove the lookup and runtime inlining to remove the call entirely, but this was considered outside the scope of the project. The actual cost to an example program is explored later with a comparison example.
+As expected the time to make a call with the compound structure scaled roughly linearly with the number of members an object had, while the hash structure remained roughly constant although the extra cost of multiple calls to calculate the hash led to making it an order of magnitude slower for very small classes. Even for the simple structure with only a few, we are roughly incurring a 3-4x slowdown when making calls. For an imperative language where calls only make up a small part of the total execution time (we tend to make heavier use of if blocks and loops for flow control), this may not be too significant. However, Prolog relies heavily on making calls and this slowdown may prove to be significant. There do exist solutions to this problem, such as inline caching to remove the lookup and runtime inlining to remove the call entirely, but this was considered outside the scope of the project. The actual cost to an example program is explored later with a comparison example.
 
 \subsection{Objects}
 
-Due to the way objects are used in OOPL, their creation and destruction is commonplace. Here we evaluate the how much time and space is required to allocate an object and to call a simple constructor. The same classes from the Dynamic Dispatch benchmarks were used, with a constructor that accepted no arguments and an empty body.
+Due to the way objects are used in OOPL, their creation and destruction (via garbage collection) is commonplace. Here we evaluate the how much time and space is required to allocate an object and to call a simple constructor. Garbage collection was forced before and after the test. The same classes from the Dynamic Dispatch benchmarks were used, with a constructor with no arguments and having an empty body.
 
 \subsubsection{Time}
 
-The time to construct and destroy one hundred thousand objects were recorded, that is allocate the memory, create all the relevant structures and lookup/invoke the constructor. Again we compare the use of both object structures.
+The time to construct and destroy one hundred thousand objects were recorded. The work for construction is the allocation of memory, creation of all relevant structures and lookup/invocation of the constructor. Again we compare the use of both object structures.
 
 \begin{center}
 \begin{tabular}{c|c|c}
@@ -1451,7 +1739,7 @@ The simpler structure naively keeps a copy of all the classes predicates, this g
 
 \subsubsection{Space}
 
-SWI-Prolog maintains 3 stacks for memory allocation, a local stack for storing calls, a global stack to store terms, and a trail stack to store assignments. The objects created by `new' live on the global stack. Again using the same classes with differing numbers of predicates, the footprint on the global stack for a single object was measured.
+SWI-Prolog maintains 3 stacks for memory allocation: a local stack for storing calls, a global stack to store terms, and a trail stack to store assignments. The objects created by `new' live on the global stack. Again using the same classes with differing numbers of predicates, the footprint on the global stack for a single object was measured.
 
 \begin{center}
 \begin{tabular}{c|c|c}
@@ -1476,15 +1764,15 @@ Number of Predicates & Simple Structure & Complex Structure \\
 \end{tabular}
 \end{center}
 
-Again due to the simple structure keeping a copy of every predicate, the objects get larger the more predicates are added. The complex structure, however, stays constant as it simply keeps a reference to a common class object. Objects have a relatively large memory footprint as compared to implementations in other languages\footnote{e.g. Java HotSpot VM will use only 8 bytes for a header, and either 4 or 8 bytes for each reference depending on 32 or 64 bit}. Most of this comes from using compound terms, an 8byte pointer\footnote{On a 64bit Prolog interpreter} is used for every atom, including the functors used in compounds. A lower level implementation would get rid of this unnecessary space usage.
+\noindent Again due to the simple structure keeping a copy of every predicate, the objects get larger the more predicates are added. The complex structure, however, stays constant as it simply keeps a reference to a common class object. Objects have a relatively large memory footprint as compared to implementations in other languages\footnote{e.g. Java HotSpot VM will use only 8 bytes for a header, and either 4 or 8 bytes for each reference depending on 32 or 64 bit}. Most of this comes from using compound terms, an 8-byte pointer\footnote{On a 64bit Prolog interpreter} is used for every atom, including the functors used in compounds. A lower-level implementation would get rid of this unnecessary space usage.
 
 \subsection{Comparison Example}
 
-The previous performance benchmarks were very limited in that they did not perform any real work. To better evaluate the performance of OOPL a small algorithm was written, in a very similar style, with three languages: Prolog, OOPL, and Logtalk\footnote{Logtalk is another, freely available, implementation of `Prolog with Objects'}. Loktalk also targets Prolog as back-end so SWI-Prolog could be used for each.
+The performance benchmarks above were very limited in that they did not perform any real work. To better evaluate the performance of OOPL a small algorithm was written, in a very similar style, with three languages: Prolog, OOPL, and Logtalk\footnote{Logtalk is another, freely available, implementation of `Prolog with Objects'}. Loktalk also targets Prolog as back-end so SWI-Prolog could be used for each.
 
 \bigskip
 
-The algorithm chosen was a sort using a binary heap. This implementations were crafted in a way that made heavy use of the new language features, while being roughly equatable algorithmically. With the Prolog implementation the heaps state was stored in a compound and a loose number of predicates. With the OOPL and Logtalk implementations the heap's state was encapsulated in an object, and public methods provided the ability to manipulate the heap. All 3 implementations of insert/extract returned a new compound/object. This meant that the OOPL and Logtalk implementations would suffer a penalty for each of the dynamic calls and object creation/destruction while still carrying out the same work.
+The algorithm chosen was a sort using a binary heap. This implementations were crafted in a way that made heavy use of the new language features, while being roughly equatable algorithmically. With the Prolog implementation the heap's state was stored in a compound and manipulated by a number of predicates. With the OOPL and Logtalk implementations the heap's state was encapsulated in an object, and public methods provided the ability to manipulate the heap. All three implementations of insert/extract returned a new compound/object. This meant that the OOPL and Logtalk implementations would suffer a penalty for each of the dynamic calls and object creation/destruction while still carrying out the same work.
 
 \bigskip
 
@@ -1502,11 +1790,11 @@ Number of Elements 	& Prolog & OOPL & Logtalk & Prolog & OOPL & Logtalk \\
 \end{tabular}
 \end{center}
 
-It should be noted that the incredibly poor performance of Logtalk was due to the dynamic creation of such a large number of objects, and not due to dynamic dispatch. In fact for the larger samples the tests took a prohibitively long time and so no results could be recorded. Obviously this slowdown could have been avoided (The Prolog program would have been valid in both OOPL and Logtalk) but this would have required not making use of the new language features.
+It should be noted that the incredibly poor performance of Logtalk was due to the dynamic creation of such a large number of objects, and not due to dynamic dispatch. In fact for the larger samples the tests took a prohibitively long time and so no results could be recorded (N/A in the table). Obviously this slowdown could have been avoided (The Prolog program would have been valid in both OOPL and Logtalk) but this would have required not making use of the new language features.
 
 \bigskip
 
-From the results it should be inferred that OOPL provides a very lightweight object implementation of objects compared to languages like Logtalk\footnote{Logtalk performs considerably better if objects are only defined statically}, even though a considerable overhead is still incurred. As we increased the sample size the relative performance of OOPL over Prolog tended towards the slowdown incurred due to dynamic dispatch. This reinforces the notion that for an efficient implementation of Prolog with objects a combination of static predicates (which were planned but not fully implemented) and inline caching should be employed.
+From the results it should be inferred that OOPL provides a very lightweight object implementation of objects compared to languages like Logtalk\footnote{Logtalk performs considerably better if objects are only defined statically}, even though a considerable overhead is still incurred. As we increased the number of elements the relative performance of OOPL over Prolog tended towards the slowdown incurred due to dynamic dispatch. This reinforces the notion that, for an efficient implementation of Prolog with objects, a combination of static predicates (which were planned but not fully implemented) and inline caching should be employed.
 
 \section{Bootstrapping}
 
@@ -1514,23 +1802,23 @@ Starting from either a snapshot or the series of compilers written during the pr
 
 \bigskip
 
-Some difficulties were experienced due to the requirement that the compiler should be able to compile itself, such as the issues with being unable to reserve keywords talked about in the implementation. Furthermore having to write in a new language that did have a fully working compiler was particularly challenging. However, it did provide provide a good test for the compiler, that it was able to compile itself. Writing a large body of code in OOPL allowed use of the language extensively enough to get an idea of its usefulness beyond short examples.
+Some difficulties were experienced due to the requirement that the compiler should be able to compile itself, such as the issues with being unable to reserve keywords talked about in the implementation. Furthermore having to write in a new language that did not have a fully working compiler was particularly challenging. However, it did provide provide a good test for the compiler, that it was able to compile itself. Writing a large body of code (the compiler) in OOPL allowed use of the language extensively enough to get an idea of its usefulness beyond short examples.
 
 \chapter{Conclusion}
 
-As described in the introduction, a compiler for a `Prolog-with-Objects' language was successfully created. In terms of how useful the language proved to be, the writing of the compiler after the transition from Prolog to OOPL was made significantly easier. The core features outlined in the preparation chapter were all met to an acceptable level. That is the ability to define classes with fields, predicates and constructors. Single inheritance, pattern matching on fields, constructing class, and accessing members was all fully functional and to specification, integrating well with Prolog's backtracking. However nearly all of the extensions were left incomplete due to time constraints, which were caused mostly by the bootstrapping process.
+As described in the introduction, a compiler for a `Prolog-with-Objects' language was successfully created. OOPL proved to be quite useful. Transitioning from Prolog to OOPL reduced complexity, and made adding new features simpler. The core features outlined in the preparation chapter were all met to an acceptable level. That is the ability to define classes with fields, predicates and constructors. Single inheritance, pattern matching on fields, constructing class, and accessing members was all fully functional and to specification, integrating well with Prolog's backtracking. However nearly all of the extensions were left incomplete due to time constraints, which were caused mostly by the bootstrapping process.
 
 \bigskip
 
-The bootstrapping was an important part of the project, but it meant that a large amount of work was duplicated when transitioning from Prolog to OOPL. Furthermore, although the new features allowed faster writing of code, the extended debugging process wasted a significant amount of time. Bugs introduced in the compiler meant having to constantly revert to a working version, which was time consuming, but more importantly debugging itself was very tedious. Firstly as the compiler was both the running program and the input file, it was difficult to isolate where the bug occurred (bad input vs bad logic). Secondly, and more importantly, there did not exist any tools for debugging OOPL, only Prolog. This meant the only course of action if the compiler did not work was to compile it to Prolog, and use Prolog debugging tools on the resulting compiler output. If I were to attempt the project again, or have a longer time to pursue it, I would consider developing a set of debugging tools alongside the compiler to improve the process.
+The bootstrapping was an important part of the project, but it meant that a large amount of work was duplicated when transitioning from Prolog to OOPL. Furthermore, although the new features allowed faster writing of code, the extended debugging process wasted a significant amount of time. Bugs introduced in the compiler meant having to constantly revert to a working version, which was time consuming, but more importantly debugging itself was very tedious. Firstly as the compiler was both the running program and the input file, it was difficult to isolate where the bug occurred (bad input vs bad logic). Secondly, and more importantly, there did not exist any tools for debugging OOPL, only Prolog. This meant the only course of action if the compiler did not work was to compile it to Prolog, and use Prolog debugging tools on the resulting compiler output (analogous to attempting to debug machine code). If I were to attempt the project again, or have a longer time to pursue it, I would consider developing a set of debugging tools alongside the compiler to improve the process.
 
 \bigskip
 
-Although the implementation worked, the reliance on Prolog terms was limiting, and gave poor performance. It would have been better to implement a runtime in a foreign, lower level language and only write the compiler itself in OOPL.
+Although implementing everything in Prolog kept things consistent, Prolog terms terms were limiting, and gave poor performance. It would have been better to implement the runtime in a foreign, lower-level language and only write the compiler itself in OOPL. This compromise would allow the majority of code to still be maintained in the high-level language, but with all the run-time performance of a low-level language.
 
 \bigskip
 
-Although only providing the basic features of an object-oriented the language, OOPL proved very useful over standard Prolog, especially for encapsulating and hiding information which were essential a larger system. I found many of the patterns used when writing the Prolog version of the compiler translated well into the new paradigm. Given more time I would finish more of the planned features and rework the representation of objects, but otherwise the compiler was successful in providing a means to programing in OOPL.
+Although only providing the basic features of an object-oriented the language, OOPL proved very useful over standard Prolog, especially for encapsulating and hiding information which were essential in a larger system. I found many of the patterns used when writing the Prolog version of the compiler translated well into the new paradigm. Given more time I would finish more of the planned features and rework the representation of objects, but otherwise the compiler was successful in providing a means to programing in OOPL.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the bibliography
@@ -1544,5 +1832,7 @@ Although only providing the basic features of an object-oriented the language, O
 
 
 \chapter{Project Proposal}
+
+\includepdf[pages=-]{proposal.pdf}
 
 \end{document}
